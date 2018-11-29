@@ -1879,7 +1879,7 @@ static void repart_init_fixed_costs(int policy) {
 
   /* TODO: these may be separable, so we could have costs for each policy
    * addition, if separated need to take care with the relative scaling. */
-  if (policy & (engine_policy_hydro & engine_policy_self_gravity)) {
+  if (policy & (engine_policy_hydro | engine_policy_self_gravity)) {
 
     /* EAGLE_50 -s -G -S 8 nodes 16 cores */
     repartition_costs[1][0] = 45842;  /* sort/none */
