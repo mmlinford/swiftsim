@@ -8,6 +8,12 @@
 #ifndef ARGPARSE_H
 #define ARGPARSE_H
 
+#ifdef __STDC_ALLOC_LIB__
+#define __STDC_WANT_LIB_EXT2__ 1
+#else
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /* For c++ compatibility */
 #ifdef __cplusplus
 extern "C" {
