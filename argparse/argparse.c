@@ -5,6 +5,18 @@
  * Use of this source code is governed by a MIT-style license that can be found
  * in the LICENSE file.
  */
+
+
+/**
+ ** These defines are required to use strdup according to C dynamic memory extensions,
+ ** as described here: https://en.cppreference.com/w/c/experimental/dynamic/strdup
+ **/
+#ifdef __STDC_ALLOC_LIB__
+#define __STDC_WANT_LIB_EXT2__ 1
+#else
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "argparse.h"
 #include <assert.h>
 #include <errno.h>

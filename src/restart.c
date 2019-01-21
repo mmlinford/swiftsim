@@ -22,6 +22,18 @@
  *  @brief support for SWIFT restarts
  */
 
+
+/**
+ ** These defines are required to use strdup according to C dynamic memory extensions,
+ ** as described here: https://en.cppreference.com/w/c/experimental/dynamic/strdup
+ **/
+#ifdef __STDC_ALLOC_LIB__
+#define __STDC_WANT_LIB_EXT2__ 1
+#else
+#define _POSIX_C_SOURCE 200809L
+#endif
+
+
 /* Config parameters. */
 #include "../config.h"
 
