@@ -521,24 +521,34 @@ struct star_formation_history {
   };
 };
 
-void starformation_update_SFH(const struct spart* sp, const struct star_formation_history* sf, const struct cosmology* cosmo, 
+void starformation_update_SFH(struct spart* sp, const struct star_formation_history* sf, const struct cosmology* cosmo, 
     const int with_cosmology){ 
-    /* Add mass of created sparticle to the total stellar mass in this cell*/
-    sf->new_stellar_mass = sf->new_stellar_mass + sp->mass;
+  /* Add mass of created sparticle to the total stellar mass in this cell*/
+  sf->new_stellar_mass = sf->new_stellar_mass + sp->mass;
 
-    /* Increase the counter */
-    sf->N_stars++;
+  /* Increase the counter */
+  sf->N_stars++;
 
 }
 
-void starformation_init_SFH(const struct star_formation_history* sf, const struct cosmology* cosmo, 
+void starformation_init_SFH(struct star_formation_history* sf, const struct cosmology* cosmo, 
     const int with_cosmology){ 
-    /* Initialize the stellar mass to zero*/
-    sf->new_stellar_mass = 0.f;
+  /* Initialize the stellar mass to zero*/
+  sf->new_stellar_mass = 0.f;
 
-    /* Initialize the counter at zero */
-    sf->N_stars=0;
+  /* Initialize the counter at zero */
+  sf->N_stars=0;
 
+}
+
+void starformation_add_progeny_SFH(struct star_formation_history* sf, 
+    const struct star_formation_history* sfprogeny, const struct cosmology* cosmo, 
+    const int with_cosmology){
+  /* Add the new stellar mass from the progeny */
+  sf->new_stellar_mass = sf->new_stellar_mass + sfprogeny->new_stellar_mass;
+
+  /* Increase amount of new stars formed */
+  sf->N_stars = sf->N_stars + sfprogeny->N_stars;
 }
 
 #endif /* SWIFT_SCHAYE_STARFORMATION_H */
