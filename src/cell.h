@@ -358,6 +358,9 @@ struct cell {
     /*! Do any of this cell's sub-cells need to be limited? */
     char do_sub_limiter;
 
+    /*! Star formation storing struct */ 
+    struct star_formation_history *sfh;
+
 #ifdef SWIFT_DEBUG_CHECKS
 
     /*! Last (integer) time the cell's sort arrays were updated. */
@@ -538,9 +541,6 @@ struct cell {
 
     /*! Is the #spart data of this cell being used in a sub-cell? */
     int hold;
-
-    /*! Star formation storing struct */ 
-    struct star_formation_history *sfh;
 
 #ifdef SWIFT_DEBUG_CHECKS
     /*! Last (integer) time the cell's sort arrays were updated. */
