@@ -490,7 +490,10 @@ void runner_do_star_formation(struct runner *r, struct cell *c, int timer) {
   TIMER_TIC;
 
   /* Anything to do here? */
-  if (!cell_is_active_hydro(c, e)) return;
+  if (!cell_is_active_hydro(c, e)){ 
+    starformation_init_SFH(c->stars.sfh, cosmo,with_cosmology);
+    return;
+  }
 
   /* Recurse? */
   if (c->split) {

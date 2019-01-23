@@ -38,6 +38,7 @@
 #include "space.h"
 #include "task.h"
 #include "timeline.h"
+#include "starformation.h" 
 
 /* Avoid cyclic inclusions */
 struct engine;
@@ -537,6 +538,9 @@ struct cell {
 
     /*! Is the #spart data of this cell being used in a sub-cell? */
     int hold;
+
+    /*! Star formation storing struct */ 
+    struct star_formation_history *sfh;
 
 #ifdef SWIFT_DEBUG_CHECKS
     /*! Last (integer) time the cell's sort arrays were updated. */

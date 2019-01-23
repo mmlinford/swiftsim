@@ -501,39 +501,6 @@ INLINE static void starformation_print_backend(
   message("Temperature threshold is given by Dalla Vecchia and Schaye (2012)");
   message("The temperature threshold is given by: %e K",
           starform->Temperature_threshold);
-  message("DEBUG: PRINT COMPLETE STRUCT");
-  message("KS_normalization = %e", starform->KS_normalization);
-  // message("KS_normalization_MSUNpYRpKPC2 = %e",
-  // starform->KS_normalization_MSUNpYRpKPC2);  message("KS_power_law = %e",
-  // starform->KS_power_law);  message("KS_high_den_power_law = %e",
-  // starform->KS_high_den_power_law);
-  message("KS_high_den_thresh = %e", starform->KS_high_den_thresh);
-  message("KS_high_den_normalization = %e",
-          starform->KS_high_den_normalization);
-  // message("min_over_den = %e", starform->min_over_den);
-  // message("Temperature_threshold = %e", starform->Temperature_threshold);
-  // message("fgas = %e", starform->fgas);
-  // message("SF_power_law = %e", starform->SF_power_law);
-  message("SF_normalization = %e", starform->SF_normalization);
-  // message("SF_high_den_power_law = %e", starform->SF_high_den_power_law);
-  message("SF_high_den_normalization = %e",
-          starform->SF_high_den_normalization);
-  // message("inv_RAND_MAX = %e", starform->inv_RAND_MAX);
-  message("density_threshold = %e", starform->density_threshold);
-  // message("density_threshold_HpCM3 = %e", starform->density_threshold_HpCM3);
-  message("density_threshold_max = %e", starform->density_threshold_max);
-  // message("density_threshold_max_HpCM3 = %e",
-  // starform->density_threshold_max_HpCM3);  message("Z0 = %e", starform->Z0);
-  // message("Z0_inv = %e", starform->Z0_inv);
-  // message("n_Z0 = %e", starform->n_Z0);
-  // message("polytropic_index = %e", starform->polytropic_index);
-  message("EOS_pressure_norm = %e", starform->EOS_pressure_norm);
-  // message("EOS_temperature_norm = %e", starform->EOS_temperature_norm);
-  message("EOS_density_norm = %e", starform->EOS_density_norm);
-  // message("EOS_density_norm_HpCM3 = %e", starform->EOS_density_norm_HpCM3);
-  message("SFR normalization = %e",
-          pow(starform->EOS_pressure_norm, starform->polytropic_index / 5.f) *
-              starform->SF_normalization);
 }
 
 /* Starformation history struct */
@@ -553,5 +520,25 @@ struct star_formation_history {
     float scale_factor;
   };
 };
+
+void starformation_update_SFH(const struct spart* sp, const struct star_formation_history* sf, const struct cosmology* cosmo, 
+    const int with_cosmology){ 
+    /* Add mass of created sparticle to the total stellar mass in this cell*/
+    sf->new_stellar_mass = sf->new_stellar_mass + sp->mass;
+
+    /* Increase the counter */
+    sf->N_stars++;
+
+}
+
+void starformation_init_SFH(const struct star_formation_history* sf, const struct cosmology* cosmo, 
+    const int with_cosmology){ 
+    /* Initialize the stellar mass to zero*/
+    sf->new_stellar_mass = 0.f;
+
+    /* Initialize the counter at zero */
+    sf->N_stars=0;
+
+}
 
 #endif /* SWIFT_SCHAYE_STARFORMATION_H */
