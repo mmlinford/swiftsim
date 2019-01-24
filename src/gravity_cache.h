@@ -24,6 +24,7 @@
 
 /* Local headers */
 #include "align.h"
+#include "cell.h"
 #include "error.h"
 #include "gravity.h"
 #include "vector.h"
