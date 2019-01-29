@@ -2463,6 +2463,7 @@ void engine_collect_end_of_step(struct engine *e, int apply) {
   data.e = e;
   const struct cosmology *cosmo = e->cosmology;
   const int with_cosmology = (e->policy & engine_policy_cosmology);
+
   starformation_init_SFH(data.sfh, cosmo, with_cosmology);
 
   /* Collect information from the local top-level cells */
