@@ -2453,7 +2453,8 @@ void engine_collect_end_of_step(struct engine *e, int apply) {
 
   const ticks tic = getticks();
   struct space *s = e->s;
-  struct end_of_step_data data;
+  struct end_of_step_data data = {0};
+  // This seems simpler? Matthieu ^ what do you think?
   data.updated = 0, data.g_updated = 0, data.s_updated = 0;
   data.inhibited = 0, data.g_inhibited = 0, data.s_inhibited = 0;
   data.ti_hydro_end_min = max_nr_timesteps, data.ti_hydro_end_max = 0,
