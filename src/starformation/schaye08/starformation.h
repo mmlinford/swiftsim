@@ -551,4 +551,13 @@ INLINE static void starformation_add_progeny_SFH(struct star_formation_history* 
   sf->N_stars = sf->N_stars + sfprogeny->N_stars;
 }
 
+INLINE static void star_formation_get_total_cell(const struct cell *c, struct star_formation_history *sf, 
+    const struct cosmology* cosmo, const int with_cosmology){
+  /* Get the star formation history from the cell */
+  struct star_formation_history *sfcell = c->stars.sfh;
+  sf->new_stellar_mass += sfcell->new_stellar_mass;
+  
+  sf->N_stars += sfcell->new_stellar_mass;
+}
+
 #endif /* SWIFT_SCHAYE_STARFORMATION_H */

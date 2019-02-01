@@ -2364,6 +2364,10 @@ void engine_collect_end_of_step_mapper(void *map_data, int num_elements,
                 ti_gravity_beg_max = 0;
   integertime_t ti_stars_end_min = max_nr_timesteps;
 
+  const struct cosmology *cosmo = e->cosmology;
+  const int with_cosmology = (e->policy & engine_policy_cosmology);
+  struct star_formation_history sfh = {0};
+
   for (int ind = 0; ind < num_elements; ind++) {
     struct cell *c = &s->cells_top[local_cells[ind]];
 
@@ -2394,6 +2398,8 @@ void engine_collect_end_of_step_mapper(void *map_data, int num_elements,
       g_inhibited += c->grav.inhibited;
       s_inhibited += c->stars.inhibited;
 
+      star_formation_get_total_cell(c, sfh, cosmo, with_cosmology);
+
       /* Collected, so clear for next time. */
       c->hydro.updated = 0;
       c->grav.updated = 0;
@@ -2411,6 +2417,8 @@ void engine_collect_end_of_step_mapper(void *map_data, int num_elements,
     data->inhibited += inhibited;
     data->g_inhibited += g_inhibited;
     data->s_inhibited += s_inhibited;
+
+    starformation_add_progeny_SFH(data->sfh, sfh, cosmo, with_cosmology);
 
     if (ti_hydro_end_min > e->ti_current)
       data->ti_hydro_end_min = min(ti_hydro_end_min, data->ti_hydro_end_min);
