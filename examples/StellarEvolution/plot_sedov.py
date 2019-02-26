@@ -102,6 +102,7 @@ u = sim["/PartType0/InternalEnergy"][:]
 S = sim["/PartType0/Entropy"][:]
 P = sim["/PartType0/Pressure"][:]
 rho = sim["/PartType0/Density"][:]
+mass = sim["/PartType0/Masses"][:]
 
 # Bin te data
 r_bin_edge = np.arange(0., 0.5, 0.01)
@@ -134,7 +135,7 @@ xlabel("${\\rm{Radius}}~r (cm)$", labelpad=0)
 ylabel("${\\rm{Radial~velocity}}~v_r (cm \cdot s^{-1})$", labelpad=0)
 ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 xlim(0, 3e22)
-ylim(-2e7, 4e7)
+ylim(-1.2e7, 3.2e7)
 
 # Density profile --------------------------------
 subplot(232)
@@ -144,7 +145,7 @@ xlabel("${\\rm{Radius}}~r (cm)$", labelpad=0)
 ylabel("${\\rm{Density}}~\\rho (g \cdot cm^{-3})$", labelpad=2)
 ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 xlim(0, 3e22)
-ylim(0, 5e24)
+ylim(0, 6e-24)
 
 # Pressure profile --------------------------------
 subplot(233)
@@ -154,7 +155,7 @@ xlabel("${\\rm{Radius}}~r (cm)$", labelpad=0)
 ylabel("${\\rm{Pressure}}~P (Ba)$", labelpad=0)
 ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 xlim(0, 3e22)
-ylim(0, 1e-10)
+ylim(0, 2e-10)
 
 # Internal energy profile -------------------------
 subplot(234)
@@ -174,12 +175,19 @@ xlabel("${\\rm{Radius}}~r (cm)$", labelpad=0)
 ylabel("${\\rm{Entropy}}~S (erg \cdot K^{-1})$", labelpad=0)
 ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 xlim(0, 3e22)
-ylim(0, 1e56)
+ylim(0, 2e55)
 
 # Information -------------------------------------
 subplot(236, frameon=False)
 
 text(-0.49, 0.7, "Time (Myr) $%.2f$"%(time*unit_time_in_cgs/Myr_in_cgs), fontsize=10)
+text(-0.49, 0.6, "Max abs radial velocity (cm/s) $%.2e$"%(np.max(np.absolute(v_r * unit_vel_in_cgs))), fontsize=10)
+energy = zeros(len(mass))
+for i in range(len(mass)):
+	energy[i] = (mass[i]*u[i] + 0.5*mass[i]*np.dot(vel[i,:],vel[i,:]))
+total_energy = np.sum(energy)
+text(-0.49, 0.5, "total energy (erg) $%.2e$"%(total_energy * unit_energy_in_cgs), fontsize=10)
+
 xlim(-0.5, 0.5)
 ylim(0, 1)
 xticks([])
