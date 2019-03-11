@@ -1421,9 +1421,10 @@ static void partition_gather_weights(void *map_data, int num_elements,
     if (t->type == task_type_drift_part || t->type == task_type_drift_gpart ||
         t->type == task_type_ghost || t->type == task_type_extra_ghost ||
         t->type == task_type_kick1 || t->type == task_type_kick2 ||
-        t->type == task_type_end_force || t->type == task_type_cooling ||
-        t->type == task_type_timestep || t->type == task_type_init_grav ||
-        t->type == task_type_grav_down ||
+        t->type == task_type_end_hydro_force ||
+        t->type == task_type_end_grav_force || t->type == task_type_cooling ||
+        t->type == task_type_star_formation || t->type == task_type_timestep ||
+        t->type == task_type_init_grav || t->type == task_type_grav_down ||
         t->type == task_type_grav_long_range) {
 
       /* Particle updates add only to vertex weight. */
@@ -2331,9 +2332,10 @@ static void check_weights(struct task *tasks, int nr_tasks,
     if (t->type == task_type_drift_part || t->type == task_type_drift_gpart ||
         t->type == task_type_ghost || t->type == task_type_extra_ghost ||
         t->type == task_type_kick1 || t->type == task_type_kick2 ||
-        t->type == task_type_end_force || t->type == task_type_cooling ||
-        t->type == task_type_timestep || t->type == task_type_init_grav ||
-        t->type == task_type_grav_down ||
+        t->type == task_type_end_hydro_force ||
+        t->type == task_type_end_grav_force || t->type == task_type_cooling ||
+        t->type == task_type_star_formation || t->type == task_type_timestep ||
+        t->type == task_type_init_grav || t->type == task_type_grav_down ||
         t->type == task_type_grav_long_range) {
 
       /* Particle updates add only to vertex weight. */
