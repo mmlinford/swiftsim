@@ -2948,7 +2948,9 @@ void engine_init_particles(struct engine *e, int flag_entropy_ICs,
 
 #ifdef SWIFT_DEBUG_CHECKS
   /* Make sure all woken-up particles have been processed */
-  space_check_limiter(e->s);
+  if (e->policy & engine_policy_limiter) {
+    space_check_limiter(e->s);
+  }
 #endif
 
   /* Recover the (integer) end of the next time-step */
@@ -3218,7 +3220,9 @@ void engine_step(struct engine *e) {
 
 #ifdef SWIFT_DEBUG_CHECKS
   /* Make sure all woken-up particles have been processed */
-  space_check_limiter(e->s);
+  if (e->policy & engine_policy_limiter) {
+    space_check_limiter(e->s);
+  }
 #endif
 
   /* Collect information about the next time-step */
