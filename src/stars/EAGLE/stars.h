@@ -259,6 +259,7 @@ __attribute__((always_inline)) INLINE static void feedback_apply(
 
   /* Be safe, make sure the energy injection is reset */
   p->feedback_data.delta_u = 0.f;
+  p->wakeup = time_bin_awake;
 }
 
 #endif /* SWIFT_EAGLE_STARS_H */
