@@ -754,6 +754,8 @@ __attribute__((always_inline)) INLINE static void hydro_reset_predicted_values(
   p->u = xp->u_full;
 }
 
+#include "entropy_floor.h"
+
 /**
  * @brief Predict additional particle fields forward in time when drifting
  *
@@ -770,7 +772,8 @@ __attribute__((always_inline)) INLINE static void hydro_reset_predicted_values(
  */
 __attribute__((always_inline)) INLINE static void hydro_predict_extra(
     struct part *restrict p, const struct xpart *restrict xp, float dt_drift,
-    float dt_therm) {
+    float dt_therm, const struct cosmology *cosmo,
+    const struct entropy_floor_properties *floor) {
 
   const float h_inv = 1.f / p->h;
 
@@ -796,6 +799,14 @@ __attribute__((always_inline)) INLINE static void hydro_predict_extra(
 
   /* Predict the internal energy */
   p->u += p->u_dt * dt_therm;
+
+  /* Get the minimal co-moving internal energgy */
+  const float floor_A = entropy_floor(p, cosmo, floor);
+  const double rho = p->rho;
+  const float floor_u = gas_internal_energy_from_entropy(rho, floor_A);
+  if (p->u < floor_u) {
+    p->u = floor_u;
+  }
 
   /* Compute the new sound speed */
   const float soundspeed = hydro_get_comoving_soundspeed(p);

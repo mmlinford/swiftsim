@@ -56,7 +56,7 @@ static const int bisection_max_iterations = 150;
 static const float explicit_tolerance = 0.05;
 static const float newton_tolerance = 1.0e-4;
 static const float bisection_tolerance = 1.0e-6;
-static const float rounding_tolerance = 1.0e-4;
+// static const float rounding_tolerance = 1.0e-4;
 static const double bracket_factor = 1.5;              /* sqrt(1.1) */
 static const double newton_log_u_guess_cgs = 12.30103; /* log10(2e12) */
 
@@ -485,7 +485,7 @@ void cooling_cool_part(const struct phys_const *phys_const,
   u_0 = max(u_0, hydro_properties->minimal_internal_energy);
 
   /* Convert to CGS units */
-  const double u_start_cgs = u_start * cooling->internal_energy_to_cgs;
+  // const double u_start_cgs = u_start * cooling->internal_energy_to_cgs;
   const double u_0_cgs = u_0 * cooling->internal_energy_to_cgs;
   const double dt_cgs = dt * units_cgs_conversion_factor(us, UNIT_CONV_TIME);
 
@@ -590,12 +590,15 @@ void cooling_cool_part(const struct phys_const *phys_const,
     }
   }
 
-  /* Expected change in energy over the next kick step
-     (assuming no change in dt) */
-  const double delta_u_cgs = u_final_cgs - u_start_cgs;
+  double u_final = u_final_cgs * cooling->internal_energy_from_cgs;
+  u_final = max(u_final, hydro_properties->minimal_internal_energy);
 
-  /* Convert back to internal units */
-  double delta_u = delta_u_cgs * cooling->internal_energy_from_cgs;
+  /* /\* Expected change in energy over the next kick step */
+  /*    (assuming no change in dt) *\/ */
+  /* const double delta_u_cgs = u_final_cgs - u_start_cgs; */
+
+  /* /\* Convert back to internal units *\/ */
+  /* double delta_u = delta_u_cgs * cooling->internal_energy_from_cgs; */
 
   /* We now need to check that we are not going to go below any of the limits */
 
@@ -604,28 +607,36 @@ void cooling_cool_part(const struct phys_const *phys_const,
   const double rho = hydro_get_physical_density(p, cosmo);
   const double u_floor = gas_internal_energy_from_entropy(rho, A_floor);
 
-  /* Absolute minimum */
-  const double u_minimal = hydro_properties->minimal_internal_energy;
+  u_final = max(u_final, u_floor);
 
-  /* Largest of both limits */
-  const double u_limit = max(u_minimal, u_floor);
+  const double delta_u = u_final - u_start;
 
-  /* First, check whether we may end up below the minimal energy after
-   * this step 1/2 kick + another 1/2 kick that could potentially be for
-   * a time-step twice as big. We hence check for 1.5 delta_u. */
-  if (u_start + 1.5 * delta_u < u_limit) {
-    delta_u = (u_limit - u_start) / 1.5;
-  }
+  /* /\* Absolute minimum *\/ */
+  /* const double u_minimal = hydro_properties->minimal_internal_energy; */
 
-  /* Second, check whether the energy used in the prediction could get negative.
-   * We need to check for the 1/2 dt kick followed by a full time-step drift
-   * that could potentially be for a time-step twice as big. We hence check
-   * for 2.5 delta_u but this time against 0 energy not the minimum.
-   * To avoid numerical rounding bringing us below 0., we add a tiny tolerance.
+  /* /\* Largest of both limits *\/ */
+  /* const double u_limit = max(u_minimal, u_floor); */
+
+  /* /\* First, check whether we may end up below the minimal energy after */
+  /*  * this step 1/2 kick + another 1/2 kick that could potentially be for */
+  /*  * a time-step twice as big. We hence check for 1.5 delta_u. *\/ */
+  /* if (u_start + 1.5 * delta_u < u_limit) { */
+  /*   delta_u = (u_limit - u_start) / 1.5; */
+  /* } */
+
+  /* /\* Second, check whether the energy used in the prediction could get
+   * negative. */
+  /*  * We need to check for the 1/2 dt kick followed by a full time-step drift
    */
-  if (u_start + 2.5 * delta_u < 0.) {
-    delta_u = -u_start / (2.5 + rounding_tolerance);
-  }
+  /*  * that could potentially be for a time-step twice as big. We hence check
+   */
+  /*  * for 2.5 delta_u but this time against 0 energy not the minimum. */
+  /*  * To avoid numerical rounding bringing us below 0., we add a tiny
+   * tolerance. */
+  /*  *\/ */
+  /* if (u_start + 2.5 * delta_u < 0.) { */
+  /*   delta_u = -u_start / (2.5 + rounding_tolerance); */
+  /* } */
 
   /* Turn this into a rate of change (including cosmology term) */
   const float cooling_du_dt = delta_u / dt_therm;
