@@ -179,8 +179,8 @@ void stars_prepare_feedback(
       delta_u = deltaT * k_B / (mu_ionised * hydro_gamma_minus_one * m_p);
     }
 
-    message("ID=%lld Probability: %e delta_u: %e birth_time: %e", sp->id, prob,
-            delta_u, sp->birth_time);
+    message("ID=%lld Probability: %e delta_u: %e birth_time: %e f_E: %e",
+            sp->id, prob, delta_u, sp->birth_time, f_E);
 
     /* Store all of this in the star particle for use in the feedback loop */
     sp->feedback.probability = prob;
