@@ -541,8 +541,8 @@ __attribute__((always_inline)) INLINE static void hydro_end_density(
   p->density.rot_v[2] *= h_inv_dim_plus_one * a_inv2 * rho_inv;
 
   /* Finish calculation of the velocity divergence */
-  p->viscosity.div_v *=
-      h_inv_dim_plus_one * rho_inv * a_inv2 + cosmo->H * hydro_dimension;
+  p->viscosity.div_v *= h_inv_dim_plus_one * rho_inv * a_inv2;
+  p->viscosity.div_v += cosmo->H * hydro_dimension;
 }
 
 /**
@@ -694,18 +694,37 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
   /* Here we need to update the artificial viscosity */
 
   /* Timescale for decay */
-  const float tau =
-      p->h / (2.f * p->viscosity.v_sig * hydro_props->viscosity.length);
-  /* Construct time differential of div.v implicitly */
-  const float div_v_dt =
+  
+  const float a2 = cosmo->a * cosmo->a;
+  const float a_fac_soundspeed = cosmo->a_factor_sound_speed;
+
+  /* We integrate the whole AV scheme in physical units as cancelling the cosmology terms
+     is just a nightmare, especially for non-standard gas_gamma. */
+
+  const float h_physical = p->h * cosmo->a;
+  const float v_sig_physical = p->viscosity.v_sig / a_fac_soundspeed;
+  const float div_v_physical =
+      (p->viscosity.div_v - cosmo->H * hydro_dimension) * a2;
+  const float div_v_prev_physical =
+      (p->viscosity.div_v_previous_step - cosmo->H * hydro_dimension) * a2;
+  const float dt_alpha_physical = dt_alpha / a2;
+
+  const float tau = h_physical / (2.f * v_sig_physical * hydro_props->viscosity.length); 
+
+  /* Construct time differential of div.v implicitly following the ANARCHY spec */
+
+  float div_v_dt =
       dt_alpha == 0.f
           ? 0.f
-          : (p->viscosity.div_v - p->viscosity.div_v_previous_step) / dt_alpha;
+          : (div_v_physical - div_v_prev_physical) / dt_alpha_physical;
+
   /* Construct the source term for the AV; if shock detected this is _positive_
    * as div_v_dt should be _negative_ before the shock hits */
-  const float S = p->h * p->h * max(0.f, -1.f * div_v_dt);
-  const float v_sig_square = p->viscosity.v_sig * p->viscosity.v_sig;
+  const float S = h_physical * h_physical * max(0.f, -1.f * div_v_dt);
+  const float v_sig_square = v_sig_physical * v_sig_physical;
+
   /* Calculate the current appropriate value of the AV based on the above */
+  /* Note this is v_sig_physical squared, not comoving */
   const float alpha_loc =
       hydro_props->viscosity.alpha_max * S / (v_sig_square + S);
 
@@ -717,7 +736,7 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
     const float alpha_dt = (alpha_loc - p->viscosity.alpha) / tau;
 
     /* Finally, we can update the actual value of the alpha */
-    p->viscosity.alpha += alpha_dt * dt_alpha;
+    p->viscosity.alpha += alpha_dt * dt_alpha_physical;
   }
 
   if (p->viscosity.alpha < hydro_props->viscosity.alpha_min) {
@@ -732,7 +751,8 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
   const float sqrt_u = sqrtf(p->u);
   /* Calculate initial value of alpha dt before bounding */
   /* alpha_diff_dt is cosmology-less */
-  /* Evolution term: following Schaller+ 2015 */
+  /* Evolution term: following Schaller+ 2015. This is actually cosmology-less and
+     so requires no conversion to physical. */
   float alpha_diff_dt =
       hydro_props->diffusion.beta * p->h * p->diffusion.laplace_u / sqrt_u;
   /* Decay term: not documented in Schaller+ 2015 but was present
@@ -741,7 +761,7 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
       (p->diffusion.alpha - hydro_props->diffusion.alpha_min) / tau;
 
   float new_diffusion_alpha = p->diffusion.alpha;
-  new_diffusion_alpha += alpha_diff_dt * dt_alpha;
+  new_diffusion_alpha += alpha_diff_dt * dt_alpha_physical;
 
   /* Consistency checks to ensure min < alpha < max */
   if (new_diffusion_alpha > hydro_props->diffusion.alpha_max) {
