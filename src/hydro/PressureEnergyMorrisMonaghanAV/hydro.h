@@ -526,8 +526,8 @@ __attribute__((always_inline)) INLINE static void hydro_end_density(
   p->density.rot_v[2] *= h_inv_dim_plus_one * a_inv2 * rho_inv;
 
   /* Finish calculation of the velocity divergence */
-  p->density.div_v *=
-      h_inv_dim_plus_one * rho_inv * a_inv2 + cosmo->H * hydro_dimension;
+  p->density.div_v *= h_inv_dim_plus_one * rho_inv * a_inv2;
+  p->density.div_v += cosmo->H * hydro_dimension;
 }
 
 /**
@@ -614,7 +614,11 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
 
   /* Artificial viscosity updates */
 
-  const float inverse_tau = hydro_props->viscosity.length * soundspeed * h_inv;
+  /* Need to divide by a^2 here because this is a timescale and we need to
+     introduce the time-integration factor to balance out the scale-free
+     nature of the artificial viscosity (i.e. dt has a^2 built in) */
+  const float inverse_tau =
+      (hydro_props->viscosity.length * cosmo->a2_inv) * soundspeed * h_inv;
   const float source_term = -1.f * min(p->density.div_v, 0.f);
 
   /* Compute da/dt */
