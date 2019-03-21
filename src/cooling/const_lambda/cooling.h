@@ -352,6 +352,10 @@ static INLINE void cooling_print_backend(
       "* "
       "cm^3]",
       cooling->lambda_nH2_cgs);
+    
+  message(
+      "Lambda/n_H^2=%g [internal units]", cooling->lambda_nH2_cgs * cooling->conv_factor_energy_rate_from_cgs
+  );
 
   if (cooling->cooling_tstep_mult == FLT_MAX)
     message("Cooling function time-step size is unlimited");
