@@ -26,7 +26,7 @@ def setup_axes():
     ax[0].set_ylabel("Temperature of Universe [K]")
     ax[1].set_ylabel("Physical Density of Universe [$n_H$ cm$^{-3}$]")
 
-    ax[0].set_xlim(0, 50)
+    ax[0].set_xlim(0, 100)
 
     fig.tight_layout()
 
@@ -102,8 +102,8 @@ if __name__ == "__main__":
     Plot everything!
     """
 
-    handles = ["redshift_dependence_no_z", "redshift_dependence_low_z"]
-    names = ["No Cosmology", "Low Redshift"]
+    handles = ["redshift_dependence_no_z", "redshift_dependence_low_z", "redshift_dependence_high_z"]
+    names = ["No Cosmology", "Low Redshift ($z=0.01$)", "High Redshift ($z=1$)"]
 
     fig, ax = make_plot(handles, names)
 

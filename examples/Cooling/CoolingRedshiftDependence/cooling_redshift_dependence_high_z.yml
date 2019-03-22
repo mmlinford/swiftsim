@@ -9,8 +9,8 @@ InternalUnitSystem:
 # Cosmological parameters
 Cosmology:
   h:              0.6777        # Reduced Hubble constant
-  a_begin:        0.99009       # Initial scale-factor of the simulation (z = 0.01)
-  a_end:          0.99700       # Final scale factor of the simulation (~ 100 myr)
+  a_begin:        0.5        # Initial scale-factor of the simulation (z = 1.0)
+  a_end:          0.5061559     # Final scale factor of the simulation (~ 100 myr)
   Omega_m:        0.307         # Matter density parameter
   Omega_lambda:   0.693         # Dark-energy density parameter
   Omega_b:        0.0455        # Baryon density parameter
@@ -22,14 +22,14 @@ TimeIntegration:
 
 # Parameters governing the snapshots
 Snapshots:
-  basename:	           redshift_dependence_low_z
-  delta_time:          1.0000695206950205
-  scale_factor_first:  0.99009
+  basename:	           redshift_dependence_high_z
+  delta_time:          1.000122373748838
+  scale_factor_first:  0.5
   compression:         4
 
 # Parameters governing the conserved quantities statistics
 Statistics:
-  scale_factor_first:  0.99009
+  scale_factor_first:  0.5
   delta_time:          1.1
 
 # Parameters for the hydrodynamics scheme
@@ -40,7 +40,7 @@ SPH:
   
 # Parameters related to the initial conditions
 InitialConditions:
-  file_name:  ./ics_low_z.hdf5     # The file to read
+  file_name:  ./ics_high_z.hdf5     # The file to read
   periodic:   1
 
 # Parameters for the EAGLE chemistry

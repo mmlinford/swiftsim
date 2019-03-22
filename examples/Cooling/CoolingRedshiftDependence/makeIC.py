@@ -36,13 +36,12 @@ def generate_ics(redshift: float, filename: str, glass_filename: str) -> None:
     """
 
     scale_factor = 1 / (1 + redshift)
-    energy_factor = scale_factor ** (-3.0 * (gamma - 1))
-    comoving_boxsize = boxsize * scale_factor
+    comoving_boxsize = boxsize / scale_factor
 
     glass_coordinates = get_coordinates(glass_filename)
     number_of_particles = len(glass_coordinates)
 
-    gas_particle_mass = physical_density * (comoving_boxsize ** 3) / number_of_particles
+    gas_particle_mass = physical_density * (boxsize ** 3) / number_of_particles
 
     writer = Writer(cosmo_units, comoving_boxsize)
 
@@ -52,10 +51,9 @@ def generate_ics(redshift: float, filename: str, glass_filename: str) -> None:
 
     writer.gas.masses = np.ones(number_of_particles, dtype=float) * gas_particle_mass
 
+    # Leave in physical units; handled by boxsize change.
     writer.gas.internal_energy = (
         np.ones(number_of_particles, dtype=float)
-        * energy_factor
-        * (3.0 / 2.0)
         * (temperature * kb)
         / (mu_hydrogen * mh)
     )
@@ -85,16 +83,16 @@ if __name__ == "__main__":
     parser.add_argument(
         "-a",
         "--high",
-        help="The high redshift to generate initial conditions for. Default: 10.0",
-        default=10,
+        help="The high redshift to generate initial conditions for. Default: 1.0",
+        default=1,
         type=float,
     )
 
     parser.add_argument(
         "-b",
         "--low",
-        help="The low redshift to generate initial conditions for. Default: 1.0",
-        default=1,
+        help="The low redshift to generate initial conditions for. Default: 0.01",
+        default=0.01,
         type=float,
     )
 
@@ -120,6 +118,6 @@ if __name__ == "__main__":
     generate_ics(args.high, filename="ics_high_z.hdf5", glass_filename=args.glass)
 
     if args.nocosmo:
-        generate_ics(1.0, filename="ics_no_z.hdf5", glass_filename=args.glass)
+        generate_ics(0.0, filename="ics_no_z.hdf5", glass_filename=args.glass)
 
     exit(0)

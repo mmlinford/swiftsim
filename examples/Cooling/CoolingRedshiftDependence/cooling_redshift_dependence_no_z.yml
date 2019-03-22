@@ -69,4 +69,3 @@ EAGLEEntropyFloor:
 
 LambdaCooling:
   lambda_nH2_cgs:              2.13744785e-23 # Cooling rate divided by square Hydrogen number density (in cgs units [erg * s^-1 * cm^3]
-  cooling_tstep_mult:          1e5   # (Optional) Dimensionless pre-factor for the time-step condition.
