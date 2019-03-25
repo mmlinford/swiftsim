@@ -13,7 +13,7 @@ import h5py
 
 # Physics parameters.
 boxsize = 1.0 * Mpc
-physical_density = 1.0 * mh / cm ** 3
+physical_density = 0.1 * mh / cm ** 3
 mu_hydrogen = 0.5  # Fully ionised
 temperature = 1e7 * K
 gamma = 5.0 / 3.0
@@ -54,6 +54,7 @@ def generate_ics(redshift: float, filename: str, glass_filename: str) -> None:
     # Leave in physical units; handled by boxsize change.
     writer.gas.internal_energy = (
         np.ones(number_of_particles, dtype=float)
+        * 3.0 / 2.0
         * (temperature * kb)
         / (mu_hydrogen * mh)
     )
