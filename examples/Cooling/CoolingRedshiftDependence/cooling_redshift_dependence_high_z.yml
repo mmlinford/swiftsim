@@ -22,7 +22,7 @@ TimeIntegration:
 
 # Parameters governing the snapshots
 Snapshots:
-  basename:	           redshift_dependence_high_z
+  basename:	           data/redshift_dependence_high_z
   delta_time:          1.000122373748838
   scale_factor_first:  0.5
   compression:         4
@@ -78,3 +78,8 @@ EAGLEEntropyFloor:
 
 LambdaCooling:
   lambda_nH2_cgs:              2.13744785e-23 # Cooling rate divided by square Hydrogen number density (in cgs units [erg * s^-1 * cm^3]
+
+ConstCooling:
+  cooling_rate: 1.          # Cooling rate (du/dt) (internal units)
+  min_energy:   1.          # Minimal internal energy per unit mass (internal units)
+  cooling_tstep_mult: 1.    # Dimensionless pre-factor for the time-step condition
