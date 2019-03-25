@@ -45,7 +45,7 @@ def get_data(handle: float, n_snaps: int):
     densities = []
 
     for snap in range(n_snaps):
-        data = load(f"{handle}_{snap:04d}.hdf5")
+        data = load(f"data/{handle}_{snap:04d}.hdf5")
 
         if snap == 0:
             t0 = data.metadata.t.to(Myr).value
@@ -57,7 +57,17 @@ def get_data(handle: float, n_snaps: int):
     return times, temps, densities
 
 
-def plot_single_data(handle: str, n_snaps: int, label: str, ax: plt.axes):
+def get_n_steps(timesteps_filename: str) -> int:
+    """
+    Reads the number of steps from the timesteps file.
+    """
+
+    data = np.genfromtxt(timesteps_filename)
+
+    return int(data[-1][0])
+
+
+def plot_single_data(handle: str, n_snaps: int, label: str, ax: plt.axes, n_steps:int = 0):
     """
     Takes the a single simulation and plots it on the axes.
     """
@@ -73,7 +83,7 @@ def plot_single_data(handle: str, n_snaps: int, label: str, ax: plt.axes):
 
     ax[1].plot(
         data[0], data[2],
-        label=label,
+        label=f"Steps: {n_steps}",
         marker="o",
         ms=2
     )
@@ -82,17 +92,26 @@ def plot_single_data(handle: str, n_snaps: int, label: str, ax: plt.axes):
     return
 
 
-def make_plot(handles, names, n_snaps=100):
+def make_plot(handles, names, timestep_names, n_snaps=100):
     """
     Makes the whole plot and returns the fig, ax objects.
     """
 
     fig, ax = setup_axes()
 
-    for handle, name in zip(handles, names):
-        plot_single_data(handle, n_snaps, name, ax)
+    for handle, name, timestep_name in zip(handles, names, timestep_names):
+        try:
+            n_steps = get_n_steps(timestep_name)
+        except:
+            n_steps = "Unknown"
+
+        try:
+            plot_single_data(handle, n_snaps, name, ax, n_steps=n_steps)
+        except:
+            pass
 
     ax[0].legend()
+    ax[1].legend()
 
     return fig, ax 
 
@@ -104,8 +123,9 @@ if __name__ == "__main__":
 
     handles = ["redshift_dependence_no_z", "redshift_dependence_low_z", "redshift_dependence_high_z"]
     names = ["No Cosmology", "Low Redshift ($z=0.01$)", "High Redshift ($z=1$)"]
+    timestep_names = ["timesteps_no.txt", "timesteps_low.txt", "timesteps_high.txt"]
 
-    fig, ax = make_plot(handles, names)
+    fig, ax = make_plot(handles, names, timestep_names)
 
     fig.savefig("redshift_dependence.png", dpi=300)
 
