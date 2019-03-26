@@ -218,6 +218,7 @@ hydro_get_comoving_soundspeed(const struct part *restrict p) {
 
   /* Compute the sound speed -- see theory section for justification */
   /* IDEAL GAS ONLY -- P-U does not work with generic EoS. */
+
   const float square_rooted = sqrtf(hydro_gamma * p->pressure_bar / p->rho);
 
   return square_rooted;
@@ -233,7 +234,7 @@ __attribute__((always_inline)) INLINE static float
 hydro_get_physical_soundspeed(const struct part *restrict p,
                               const struct cosmology *cosmo) {
 
-  return cosmo->a_factor_sound_speed * p->force.soundspeed;
+  return cosmo->a_factor_sound_speed * hydro_get_comoving_soundspeed(p);
 }
 
 /**
@@ -703,13 +704,14 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
 
   const float h_physical = p->h * cosmo->a;
   const float v_sig_physical = p->viscosity.v_sig / a_fac_soundspeed;
+  const float soundspeed_physical = hydro_get_physical_soundspeed(p, cosmo);
   const float div_v_physical =
       (p->viscosity.div_v - cosmo->H * hydro_dimension) * a2;
   const float div_v_prev_physical =
       (p->viscosity.div_v_previous_step - cosmo->H * hydro_dimension) * a2;
   const float dt_alpha_physical = dt_alpha / a2;
 
-  const float tau = h_physical / (2.f * v_sig_physical * hydro_props->viscosity.length); 
+  const float sound_crossing_time_inverse = soundspeed_physical / h_physical;
 
   /* Construct time differential of div.v implicitly following the ANARCHY spec */
 
@@ -733,7 +735,7 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
     p->viscosity.alpha = alpha_loc;
   } else {
     /* Integrate the alpha forward in time to decay back to alpha = 0 */
-    const float alpha_dt = (alpha_loc - p->viscosity.alpha) / tau;
+    const float alpha_dt = (alpha_loc - p->viscosity.alpha) * sound_crossing_time_inverse  * hydro_props->viscosity.length;
 
     /* Finally, we can update the actual value of the alpha */
     p->viscosity.alpha += alpha_dt * dt_alpha_physical;
@@ -748,6 +750,8 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
 
   /* Now for the diffusive alpha */
 
+  const float diffusion_timescale_physical_inverse = v_sig_physical / h_physical;
+
   const float sqrt_u = sqrtf(p->u);
   /* Calculate initial value of alpha dt before bounding */
   /* alpha_diff_dt is cosmology-less */
@@ -758,7 +762,7 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
   /* Decay term: not documented in Schaller+ 2015 but was present
    * in the original EAGLE code and in Schaye+ 2015 */
   alpha_diff_dt -=
-      (p->diffusion.alpha - hydro_props->diffusion.alpha_min) / tau;
+      (p->diffusion.alpha - hydro_props->diffusion.alpha_min) * diffusion_timescale_physical_inverse;
 
   float new_diffusion_alpha = p->diffusion.alpha;
   new_diffusion_alpha += alpha_diff_dt * dt_alpha_physical;
