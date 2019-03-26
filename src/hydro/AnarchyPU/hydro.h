@@ -735,14 +735,18 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
     p->viscosity.alpha = alpha_loc;
   } else {
     /* Integrate the alpha forward in time to decay back to alpha = 0 */
-    const float alpha_dt = (alpha_loc - p->viscosity.alpha) * sound_crossing_time_inverse  * hydro_props->viscosity.length;
-
-    /* Finally, we can update the actual value of the alpha */
-    p->viscosity.alpha += alpha_dt * dt_alpha_physical;
+    p->viscosity.alpha =
+        alpha_loc + (p->viscosity.alpha - alpha_loc) *
+                        expf(-dt_alpha_physical * sound_crossing_time_inverse *
+                             hydro_props->viscosity.length);
   }
 
   if (p->viscosity.alpha < hydro_props->viscosity.alpha_min) {
     p->viscosity.alpha = hydro_props->viscosity.alpha_min;
+  }
+
+  if (p->viscosity.alpha > hydro_props->viscosity.alpha_max) {
+    p->viscosity.alpha = hydro_props->viscosity.alpha_max;
   }
 
   /* Set our old div_v to the one for the next loop */
@@ -761,8 +765,8 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
       hydro_props->diffusion.beta * p->h * p->diffusion.laplace_u / sqrt_u;
   /* Decay term: not documented in Schaller+ 2015 but was present
    * in the original EAGLE code and in Schaye+ 2015 */
-  alpha_diff_dt -=
-      (p->diffusion.alpha - hydro_props->diffusion.alpha_min) * diffusion_timescale_physical_inverse;
+  alpha_diff_dt -= (p->diffusion.alpha - hydro_props->diffusion.alpha_min) *
+                   diffusion_timescale_physical_inverse;
 
   float new_diffusion_alpha = p->diffusion.alpha;
   new_diffusion_alpha += alpha_diff_dt * dt_alpha_physical;

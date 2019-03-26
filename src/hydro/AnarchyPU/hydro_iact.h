@@ -204,10 +204,10 @@ __attribute__((always_inline)) INLINE static void runner_iact_gradient(
                       (pi->v[1] - pj->v[1]) * dx[1] +
                       (pi->v[2] - pj->v[2]) * dx[2];
 
-  const float dv_dx_factor = min(0, const_viscosity_beta * dv_dx);
+  const float dv_dx_factor = min(0, dv_dx);
 
   const float new_v_sig =
-      pi->force.soundspeed + pj->force.soundspeed - dv_dx_factor;
+      0.5 * (pi->force.soundspeed + pj->force.soundspeed) - dv_dx_factor;
 
   /* Update if we need to */
   pi->viscosity.v_sig = max(pi->viscosity.v_sig, new_v_sig);
@@ -257,10 +257,10 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_gradient(
                       (pi->v[1] - pj->v[1]) * dx[1] +
                       (pi->v[2] - pj->v[2]) * dx[2];
 
-  const float dv_dx_factor = min(0, const_viscosity_beta * dv_dx);
+  const float dv_dx_factor = min(0, dv_dx);
 
   const float new_v_sig =
-      pi->force.soundspeed + pj->force.soundspeed - dv_dx_factor;
+      0.5 * (pi->force.soundspeed + pj->force.soundspeed) - dv_dx_factor;
 
   /* Update if we need to */
   pi->viscosity.v_sig = max(pi->viscosity.v_sig, new_v_sig);
@@ -353,7 +353,7 @@ __attribute__((always_inline)) INLINE static void runner_iact_force(
   const float rho_ij = rhoi + rhoj;
   const float alpha = pi->viscosity.alpha + pj->viscosity.alpha;
   const float visc =
-      -0.25f * alpha * v_sig * mu_ij * (balsara_i + balsara_j) / rho_ij;
+      -1.f * alpha * v_sig * mu_ij * (balsara_i + balsara_j) / rho_ij;
 
   /* Convolve with the kernel */
   const float visc_acc_term = 0.5f * visc * (wi_dr + wj_dr) * r_inv;
@@ -484,7 +484,7 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_force(
   const float rho_ij = rhoi + rhoj;
   const float alpha = pi->viscosity.alpha + pj->viscosity.alpha;
   const float visc =
-      -0.25f * alpha * v_sig * mu_ij * (balsara_i + balsara_j) / rho_ij;
+      -1.f * alpha * v_sig * mu_ij * (balsara_i + balsara_j) / rho_ij;
 
   /* Convolve with the kernel */
   const float visc_acc_term = 0.5f * visc * (wi_dr + wj_dr) * r_inv;
