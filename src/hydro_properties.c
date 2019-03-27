@@ -50,7 +50,7 @@
 /* This nasty #ifdef is only temporary until we separate the viscosity
  * and hydro components. If it is not removed by July 2019, shout at JB. */
 #define hydro_props_default_viscosity_alpha_min \
-  0.01f /* values taken from Schaller+ 2015 */
+  0.1f /* values NOT the same as Schaller+ 2015 */
 #define hydro_props_default_viscosity_alpha_max \
   2.0f /* values taken from Schaller+ 2015 */
 #define hydro_props_default_viscosity_length \
