@@ -49,6 +49,9 @@
 #ifdef ANARCHY_PU_SPH
 /* This nasty #ifdef is only temporary until we separate the viscosity
  * and hydro components. If it is not removed by July 2019, shout at JB. */
+#undef hydro_props_default_viscosity_alpha
+#define hydro_props_default_viscosity_alpha \
+  0.1f /* Use a very low initial AV paramater for hydrodynamics tests */
 #define hydro_props_default_viscosity_alpha_min \
   0.1f /* values NOT the same as Schaller+ 2015 */
 #define hydro_props_default_viscosity_alpha_max \

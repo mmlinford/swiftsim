@@ -697,14 +697,13 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
   /* Timescale for decay */
   
   const float a2 = cosmo->a * cosmo->a;
-  const float a_fac_soundspeed = cosmo->a_factor_sound_speed;
 
   /* We integrate the whole AV scheme in physical units as cancelling the cosmology terms
      is just a nightmare, especially for non-standard gas_gamma. */
 
   /* We use in this function that h is the radius of support */
   const float h_physical = p->h * cosmo->a * kernel_gamma;
-  const float v_sig_physical = p->viscosity.v_sig / a_fac_soundspeed;
+  const float v_sig_physical = p->viscosity.v_sig / cosmo->a_factor_sound_speed;
   const float soundspeed_physical = hydro_get_physical_soundspeed(p, cosmo);
   const float div_v_physical =
       (p->viscosity.div_v - cosmo->H * hydro_dimension) * a2;

@@ -203,14 +203,22 @@ __attribute__((always_inline)) INLINE static void runner_iact_gradient(
   const float r = sqrtf(r2);
   const float r_inv = 1.f / r;
 
+  /* Cosmology terms for the signal velocity */ 
+  const float fac_mu = pow_three_gamma_minus_five_over_two(a);
+  const float a2_Hubble = a * a * H;
+
   const float dv_dx = (pi->v[0] - pj->v[0]) * dx[0] +
                       (pi->v[1] - pj->v[1]) * dx[1] +
                       (pi->v[2] - pj->v[2]) * dx[2];
 
-  const float dv_dx_factor = min(0, const_viscosity_beta * dv_dx);
+  /* Add Hubble flow */
+  const float dv_dx_Hubble = dv_dx + a2_Hubble * r2;
 
+  const float dv_dx_factor = min(0, const_viscosity_beta * fac_mu * dv_dx_Hubble);
+
+  /* Store this as a _physical_ variable because of weird combinations of a-factors */
   const float new_v_sig =
-      pi->force.soundspeed + pj->force.soundspeed - dv_dx_factor * r_inv;
+      (pi->force.soundspeed + pj->force.soundspeed) - dv_dx_factor * r_inv;
 
   /* Update if we need to */
   pi->viscosity.v_sig = max(pi->viscosity.v_sig, new_v_sig);
@@ -257,15 +265,23 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_gradient(
 
   const float r = sqrtf(r2);
   const float r_inv = 1.f / r;
+  
+  /* Cosmology terms for the signal velocity */ 
+  const float fac_mu = pow_three_gamma_minus_five_over_two(a);
+  const float a2_Hubble = a * a * H;
 
   const float dv_dx = (pi->v[0] - pj->v[0]) * dx[0] +
                       (pi->v[1] - pj->v[1]) * dx[1] +
                       (pi->v[2] - pj->v[2]) * dx[2];
 
-  const float dv_dx_factor = min(0, const_viscosity_beta * dv_dx);
+  /* Add Hubble flow */
+  const float dv_dx_Hubble = dv_dx + a2_Hubble * r2;
 
+  const float dv_dx_factor = min(0, const_viscosity_beta * fac_mu * dv_dx_Hubble);
+
+  /* Store this as a _physical_ variable because of weird combinations of a-factors */
   const float new_v_sig =
-      pi->force.soundspeed + pj->force.soundspeed - dv_dx_factor * r_inv;
+      (pi->force.soundspeed + pj->force.soundspeed) - dv_dx_factor * r_inv;
 
   /* Update if we need to */
   pi->viscosity.v_sig = max(pi->viscosity.v_sig, new_v_sig);
