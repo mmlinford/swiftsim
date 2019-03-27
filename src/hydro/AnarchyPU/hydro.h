@@ -218,7 +218,7 @@ hydro_get_comoving_soundspeed(const struct part *restrict p) {
 
   /* Compute the sound speed -- see theory section for justification */
   /* IDEAL GAS ONLY -- P-U does not work with generic EoS. */
-
+  
   const float square_rooted = sqrtf(hydro_gamma * p->pressure_bar / p->rho);
 
   return square_rooted;
@@ -702,7 +702,8 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
   /* We integrate the whole AV scheme in physical units as cancelling the cosmology terms
      is just a nightmare, especially for non-standard gas_gamma. */
 
-  const float h_physical = p->h * cosmo->a;
+  /* We use in this function that h is the radius of support */
+  const float h_physical = p->h * cosmo->a * kernel_gamma;
   const float v_sig_physical = p->viscosity.v_sig / a_fac_soundspeed;
   const float soundspeed_physical = hydro_get_physical_soundspeed(p, cosmo);
   const float div_v_physical =
@@ -723,7 +724,8 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
   /* Construct the source term for the AV; if shock detected this is _positive_
    * as div_v_dt should be _negative_ before the shock hits */
   const float S = h_physical * h_physical * max(0.f, -1.f * div_v_dt);
-  const float v_sig_square = v_sig_physical * v_sig_physical;
+  /* 0.25 factor comes from our definition of v_sig */
+  const float v_sig_square = 0.25 * v_sig_physical * v_sig_physical;
 
   /* Calculate the current appropriate value of the AV based on the above */
   /* Note this is v_sig_physical squared, not comoving */

@@ -200,14 +200,17 @@ __attribute__((always_inline)) INLINE static void runner_iact_gradient(
   /* We need to construct the maximal signal velocity between our particle
    * and all of it's neighbours */
 
+  const float r = sqrtf(r2);
+  const float r_inv = 1.f / r;
+
   const float dv_dx = (pi->v[0] - pj->v[0]) * dx[0] +
                       (pi->v[1] - pj->v[1]) * dx[1] +
                       (pi->v[2] - pj->v[2]) * dx[2];
 
-  const float dv_dx_factor = min(0, dv_dx);
+  const float dv_dx_factor = min(0, const_viscosity_beta * dv_dx);
 
   const float new_v_sig =
-      0.5 * (pi->force.soundspeed + pj->force.soundspeed) - dv_dx_factor;
+      pi->force.soundspeed + pj->force.soundspeed - dv_dx_factor * r_inv;
 
   /* Update if we need to */
   pi->viscosity.v_sig = max(pi->viscosity.v_sig, new_v_sig);
@@ -217,14 +220,13 @@ __attribute__((always_inline)) INLINE static void runner_iact_gradient(
   /* Need to get some kernel values F_ij = wi_dx */
   float wi, wi_dx, wj, wj_dx;
 
-  const float r = sqrtf(r2);
   const float ui = r / hi;
   const float uj = r / hj;
 
   kernel_deval(ui, &wi, &wi_dx);
   kernel_deval(uj, &wj, &wj_dx);
 
-  const float delta_u_factor = (pi->u - pj->u) / r;
+  const float delta_u_factor = (pi->u - pj->u) * r_inv;
   pi->diffusion.laplace_u += pj->mass * delta_u_factor * wi_dx / pj->rho;
   pj->diffusion.laplace_u -= pi->mass * delta_u_factor * wj_dx / pi->rho;
 }
@@ -253,14 +255,17 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_gradient(
   /* We need to construct the maximal signal velocity between our particle
    * and all of it's neighbours */
 
+  const float r = sqrtf(r2);
+  const float r_inv = 1.f / r;
+
   const float dv_dx = (pi->v[0] - pj->v[0]) * dx[0] +
                       (pi->v[1] - pj->v[1]) * dx[1] +
                       (pi->v[2] - pj->v[2]) * dx[2];
 
-  const float dv_dx_factor = min(0, dv_dx);
+  const float dv_dx_factor = min(0, const_viscosity_beta * dv_dx);
 
   const float new_v_sig =
-      0.5 * (pi->force.soundspeed + pj->force.soundspeed) - dv_dx_factor;
+      pi->force.soundspeed + pj->force.soundspeed - dv_dx_factor * r_inv;
 
   /* Update if we need to */
   pi->viscosity.v_sig = max(pi->viscosity.v_sig, new_v_sig);
@@ -269,12 +274,11 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_gradient(
   /* Need to get some kernel values F_ij = wi_dx */
   float wi, wi_dx;
 
-  const float r = sqrtf(r2);
   const float ui = r / hi;
 
   kernel_deval(ui, &wi, &wi_dx);
 
-  const float delta_u_factor = (pi->u - pj->u) / r;
+  const float delta_u_factor = (pi->u - pj->u) * r_inv;
   pi->diffusion.laplace_u += pj->mass * delta_u_factor * wi_dx / pj->rho;
 }
 
@@ -385,7 +389,7 @@ __attribute__((always_inline)) INLINE static void runner_iact_force(
                               wj_dr * dvdr * r_inv;
 
   /* Viscosity term */
-  const float visc_du_term = 0.5f * visc_acc_term * dvdr_Hubble;
+  const float visc_du_term = 0.5 * visc_acc_term * dvdr_Hubble;
 
   /* Diffusion term */
   const float v_diff =
@@ -509,7 +513,7 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_force(
                               wi_dr * dvdr * r_inv;
 
   /* Viscosity term */
-  const float visc_du_term = 0.5f * visc_acc_term * dvdr_Hubble;
+  const float visc_du_term = 0.5 * visc_acc_term * dvdr_Hubble;
 
   /* Diffusion term */
   const float v_diff =
