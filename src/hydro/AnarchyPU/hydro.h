@@ -694,22 +694,10 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
 
   /* Here we need to update the artificial viscosity */
 
-  /* Timescale for decay */
-  
-  const float a2 = cosmo->a * cosmo->a;
-
-  /* We integrate the whole AV scheme in physical units as cancelling the cosmology terms
-     is just a nightmare, especially for non-standard gas_gamma. */
-
   /* We use in this function that h is the radius of support */
   const float h_physical = p->h * cosmo->a * kernel_gamma;
-  const float v_sig_physical = p->viscosity.v_sig / cosmo->a_factor_sound_speed;
+  const float v_sig_physical = p->viscosity.v_sig * cosmo->a_factor_sound_speed;
   const float soundspeed_physical = hydro_get_physical_soundspeed(p, cosmo);
-  const float div_v_physical =
-      (p->viscosity.div_v - cosmo->H * hydro_dimension) * a2;
-  const float div_v_prev_physical =
-      (p->viscosity.div_v_previous_step - cosmo->H * hydro_dimension) * a2;
-  const float dt_alpha_physical = dt_alpha / a2;
 
   const float sound_crossing_time_inverse = soundspeed_physical / h_physical;
 
@@ -718,16 +706,17 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
   float div_v_dt =
       dt_alpha == 0.f
           ? 0.f
-          : (div_v_physical - div_v_prev_physical) / dt_alpha_physical;
+          : (p->viscosity.div_v - p->viscosity.div_v_previous_step) / dt_alpha;
 
   /* Construct the source term for the AV; if shock detected this is _positive_
    * as div_v_dt should be _negative_ before the shock hits */
   const float S = h_physical * h_physical * max(0.f, -1.f * div_v_dt);
-  /* 0.25 factor comes from our definition of v_sig */
+  /* 0.25 factor comes from our definition of v_sig (sum of soundspeeds rather
+   * than mean). */
+  /* Note this is v_sig_physical squared, not comoving */
   const float v_sig_square = 0.25 * v_sig_physical * v_sig_physical;
 
   /* Calculate the current appropriate value of the AV based on the above */
-  /* Note this is v_sig_physical squared, not comoving */
   const float alpha_loc =
       hydro_props->viscosity.alpha_max * S / (v_sig_square + S);
 
@@ -735,19 +724,15 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
     /* Reset the value of alpha to the appropriate value */
     p->viscosity.alpha = alpha_loc;
   } else {
-    /* Integrate the alpha forward in time to decay back to alpha = 0 */
+    /* Integrate the alpha forward in time to decay back to alpha = alpha_loc */
     p->viscosity.alpha =
         alpha_loc + (p->viscosity.alpha - alpha_loc) *
-                        expf(-dt_alpha_physical * sound_crossing_time_inverse *
+                        expf(-dt_alpha * sound_crossing_time_inverse *
                              hydro_props->viscosity.length);
   }
 
   if (p->viscosity.alpha < hydro_props->viscosity.alpha_min) {
     p->viscosity.alpha = hydro_props->viscosity.alpha_min;
-  }
-
-  if (p->viscosity.alpha > hydro_props->viscosity.alpha_max) {
-    p->viscosity.alpha = hydro_props->viscosity.alpha_max;
   }
 
   /* Set our old div_v to the one for the next loop */
@@ -759,18 +744,17 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
 
   const float sqrt_u = sqrtf(p->u);
   /* Calculate initial value of alpha dt before bounding */
-  /* alpha_diff_dt is cosmology-less */
   /* Evolution term: following Schaller+ 2015. This is actually cosmology-less and
      so requires no conversion to physical. */
   float alpha_diff_dt =
-      hydro_props->diffusion.beta * p->h * p->diffusion.laplace_u / sqrt_u;
+      hydro_props->diffusion.beta * h_physical * cosmo->a_factor_sound_speed * p->diffusion.laplace_u / sqrt_u;
   /* Decay term: not documented in Schaller+ 2015 but was present
    * in the original EAGLE code and in Schaye+ 2015 */
   alpha_diff_dt -= (p->diffusion.alpha - hydro_props->diffusion.alpha_min) *
                    diffusion_timescale_physical_inverse;
 
   float new_diffusion_alpha = p->diffusion.alpha;
-  new_diffusion_alpha += alpha_diff_dt * dt_alpha_physical;
+  new_diffusion_alpha += alpha_diff_dt * dt_alpha / (cosmo->a * cosmo->a);
 
   /* Consistency checks to ensure min < alpha < max */
   if (new_diffusion_alpha > hydro_props->diffusion.alpha_max) {
