@@ -172,4 +172,22 @@ __attribute__((always_inline)) INLINE static void chemistry_first_init_part(
   chemistry_init_part(p, data);
 }
 
+/**
+ * @brief Sets the chemistry properties of the s-particles to a valid start
+ * state.
+ *
+ * @param phys_const The physical constants in internal units.
+ * @param us The internal system of units.
+ * @param cosmo The current cosmological model.
+ * @param data The global chemistry information.
+ * @param sp Pointer to the sparticle data.
+ * @param xp Pointer to the extended particle data.
+ */
+__attribute__((always_inline)) INLINE static void chemistry_first_init_spart(
+    const struct phys_const* restrict phys_const,
+    const struct unit_system* restrict us,
+    const struct cosmology* restrict cosmo,
+    const struct chemistry_global_data* data, struct spart* restrict sp,
+    struct xpart* restrict xp) {}
+
 #endif /* SWIFT_CHEMISTRY_GEAR_H */
