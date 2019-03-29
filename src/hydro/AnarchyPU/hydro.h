@@ -747,14 +747,14 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
   /* Evolution term: following Schaller+ 2015. This is actually cosmology-less and
      so requires no conversion to physical. */
   float alpha_diff_dt =
-      hydro_props->diffusion.beta * h_physical * cosmo->a_factor_sound_speed * p->diffusion.laplace_u / sqrt_u;
+      hydro_props->diffusion.beta * h_physical * p->diffusion.laplace_u * cosmo->a_factor_sound_speed / (sqrt_u * cosmo->a * cosmo->a);
   /* Decay term: not documented in Schaller+ 2015 but was present
    * in the original EAGLE code and in Schaye+ 2015 */
   alpha_diff_dt -= (p->diffusion.alpha - hydro_props->diffusion.alpha_min) *
                    diffusion_timescale_physical_inverse;
 
   float new_diffusion_alpha = p->diffusion.alpha;
-  new_diffusion_alpha += alpha_diff_dt * dt_alpha / (cosmo->a * cosmo->a);
+  new_diffusion_alpha += alpha_diff_dt * dt_alpha;
 
   /* Consistency checks to ensure min < alpha < max */
   if (new_diffusion_alpha > hydro_props->diffusion.alpha_max) {
