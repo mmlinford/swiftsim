@@ -746,8 +746,9 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
 
   const float sqrt_u = sqrtf(p->u);
   /* Calculate initial value of alpha dt before bounding */
-  /* Evolution term: following Schaller+ 2015. This is actually cosmology-less
-     and so requires no conversion to physical. */
+  /* Evolution term: following Schaller+ 2015. This is made up of several
+     cosmology factors: physical h, sound speed from u / sqrt(u), and the
+     1 / a^2 coming from the laplace operator. */
   float alpha_diff_dt = hydro_props->diffusion.beta * h_physical *
                         p->diffusion.laplace_u * cosmo->a_factor_sound_speed /
                         (sqrt_u * cosmo->a * cosmo->a);
