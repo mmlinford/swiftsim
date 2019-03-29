@@ -205,13 +205,13 @@ __attribute__((always_inline)) INLINE static void runner_iact_gradient(
   const float ci = pi->force.soundspeed;
   const float cj = pi->force.soundspeed;
 
-  /* Cosmology terms for the signal velocity */ 
+  /* Cosmology terms for the signal velocity */
   const float fac_mu = pow_three_gamma_minus_five_over_two(a);
   const float a2_Hubble = a * a * H;
 
   const float dvdr = (pi->v[0] - pj->v[0]) * dx[0] +
-                      (pi->v[1] - pj->v[1]) * dx[1] +
-                      (pi->v[2] - pj->v[2]) * dx[2];
+                     (pi->v[1] - pj->v[1]) * dx[1] +
+                     (pi->v[2] - pj->v[2]) * dx[2];
 
   /* Add Hubble flow */
 
@@ -270,14 +270,14 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_gradient(
   const float r_inv = 1.f / r;
   const float ci = pi->force.soundspeed;
   const float cj = pi->force.soundspeed;
-  
-  /* Cosmology terms for the signal velocity */ 
+
+  /* Cosmology terms for the signal velocity */
   const float fac_mu = pow_three_gamma_minus_five_over_two(a);
   const float a2_Hubble = a * a * H;
 
   const float dvdr = (pi->v[0] - pj->v[0]) * dx[0] +
-                      (pi->v[1] - pj->v[1]) * dx[1] +
-                      (pi->v[2] - pj->v[2]) * dx[2];
+                     (pi->v[1] - pj->v[1]) * dx[1] +
+                     (pi->v[2] - pj->v[2]) * dx[2];
 
   /* Add Hubble flow */
 

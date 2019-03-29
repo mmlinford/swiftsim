@@ -218,7 +218,7 @@ hydro_get_comoving_soundspeed(const struct part *restrict p) {
 
   /* Compute the sound speed -- see theory section for justification */
   /* IDEAL GAS ONLY -- P-U does not work with generic EoS. */
-  
+
   const float square_rooted = sqrtf(hydro_gamma * p->pressure_bar / p->rho);
 
   return square_rooted;
@@ -701,7 +701,8 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
 
   const float sound_crossing_time_inverse = soundspeed_physical / h_physical;
 
-  /* Construct time differential of div.v implicitly following the ANARCHY spec */
+  /* Construct time differential of div.v implicitly following the ANARCHY spec
+   */
 
   float div_v_dt =
       dt_alpha == 0.f
@@ -740,14 +741,16 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
 
   /* Now for the diffusive alpha */
 
-  const float diffusion_timescale_physical_inverse = v_sig_physical / h_physical;
+  const float diffusion_timescale_physical_inverse =
+      v_sig_physical / h_physical;
 
   const float sqrt_u = sqrtf(p->u);
   /* Calculate initial value of alpha dt before bounding */
-  /* Evolution term: following Schaller+ 2015. This is actually cosmology-less and
-     so requires no conversion to physical. */
-  float alpha_diff_dt =
-      hydro_props->diffusion.beta * h_physical * p->diffusion.laplace_u * cosmo->a_factor_sound_speed / (sqrt_u * cosmo->a * cosmo->a);
+  /* Evolution term: following Schaller+ 2015. This is actually cosmology-less
+     and so requires no conversion to physical. */
+  float alpha_diff_dt = hydro_props->diffusion.beta * h_physical *
+                        p->diffusion.laplace_u * cosmo->a_factor_sound_speed /
+                        (sqrt_u * cosmo->a * cosmo->a);
   /* Decay term: not documented in Schaller+ 2015 but was present
    * in the original EAGLE code and in Schaye+ 2015 */
   alpha_diff_dt -= (p->diffusion.alpha - hydro_props->diffusion.alpha_min) *
