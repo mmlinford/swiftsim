@@ -425,8 +425,7 @@ void pairs_all_stars_density(struct runner *r, struct cell *ci,
   const double dim[3] = {r->e->s->dim[0], r->e->s->dim[1], r->e->s->dim[2]};
   const struct engine *e = r->e;
   const struct cosmology *cosmo = e->cosmology;
-  const float a = cosmo->a;
-  const float H = cosmo->H;
+  const struct stars_props *stars_properties = e->stars_properties;
 
   /* Implements a double-for loop and checks every interaction */
   for (int i = 0; i < ci->stars.count; ++i) {
@@ -441,6 +440,7 @@ void pairs_all_stars_density(struct runner *r, struct cell *ci,
     for (int j = 0; j < cj->hydro.count; ++j) {
 
       struct part *pj = &cj->hydro.parts[j];
+      struct xpart *xpj = &cj->hydro.xparts[j];
 
       /* Early abort? */
       if (part_is_inhibited(pj, e)) continue;
@@ -456,7 +456,8 @@ void pairs_all_stars_density(struct runner *r, struct cell *ci,
       /* Hit or miss? */
       if (r2 < hig2) {
         /* Interact */
-        runner_iact_nonsym_stars_density(r2, dx, hi, pj->h, spi, pj, a, H);
+        runner_iact_nonsym_stars_density(r2, dx, hi, pj->h, spi, pj, cosmo, stars_properties,
+		   xpj, e->ti_current);
       }
     }
   }
@@ -478,6 +479,8 @@ void pairs_all_stars_density(struct runner *r, struct cell *ci,
       /* Early abort? */
       if (part_is_inhibited(pi, e)) continue;
 
+      struct xpart *xpi = &ci->hydro.xparts[i];
+
       /* Pairwise distance */
       r2 = 0.0f;
       for (int k = 0; k < 3; k++) {
@@ -489,7 +492,8 @@ void pairs_all_stars_density(struct runner *r, struct cell *ci,
       /* Hit or miss? */
       if (r2 < hjg2) {
         /* Interact */
-        runner_iact_nonsym_stars_density(r2, dx, hj, pi->h, spj, pi, a, H);
+        runner_iact_nonsym_stars_density(r2, dx, hj, pi->h, spj, pi, cosmo, stars_properties,
+		   xpi, e->ti_current);
       }
     }
   }
@@ -649,8 +653,7 @@ void self_all_stars_density(struct runner *r, struct cell *ci) {
   struct part *pj;
   const struct engine *e = r->e;
   const struct cosmology *cosmo = e->cosmology;
-  const float a = cosmo->a;
-  const float H = cosmo->H;
+  const struct stars_props *stars_properties = e->stars_properties;
 
   /* Implements a double-for loop and checks every interaction */
   for (int i = 0; i < ci->stars.count; ++i) {
@@ -664,6 +667,7 @@ void self_all_stars_density(struct runner *r, struct cell *ci) {
     for (int j = 0; j < ci->hydro.count; ++j) {
 
       pj = &ci->hydro.parts[j];
+      struct xpart *xpj = &ci->hydro.xparts[j];
       hj = pj->h;
 
       /* Early abort? */
@@ -679,7 +683,8 @@ void self_all_stars_density(struct runner *r, struct cell *ci) {
       /* Hit or miss? */
       if (r2 < hig2) {
         /* Interact */
-        runner_iact_nonsym_stars_density(r2, dxi, hi, hj, spi, pj, a, H);
+        runner_iact_nonsym_stars_density(r2, dxi, hi, hj, spi, pj, cosmo, stars_properties,
+					 xpj, e->ti_current);
       }
     }
   }

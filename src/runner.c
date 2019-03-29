@@ -136,6 +136,8 @@ void runner_do_stars_ghost(struct runner *r, struct cell *c, int timer) {
   struct spart *restrict sparts = c->stars.parts;
   const struct engine *e = r->e;
   const struct cosmology *cosmo = e->cosmology;
+  const struct unit_system *us = e->internal_units;
+  const int with_cosmology = (e->policy & engine_policy_cosmology);
   const float stars_h_max = e->hydro_properties->h_max;
   const float stars_h_min = e->hydro_properties->h_min;
   const float eps = e->stars_properties->h_tolerance;
@@ -191,6 +193,17 @@ void runner_do_stars_ghost(struct runner *r, struct cell *c, int timer) {
         /* Get a direct pointer on the part. */
         struct spart *sp = &sparts[sid[i]];
 
+        /* get particle timestep */
+        double dt;
+        if (with_cosmology) {
+          const integertime_t ti_step = get_integer_timestep(sp->time_bin);
+          const integertime_t ti_begin =
+              get_integer_time_begin(e->ti_current - 1, sp->time_bin);
+          dt = cosmology_get_therm_kick_factor(e->cosmology, ti_begin,
+                                               ti_begin + ti_step);
+        } else {
+          dt = get_timestep(sp->time_bin, e->time_base);
+        }
 #ifdef SWIFT_DEBUG_CHECKS
         /* Is this part within the timestep? */
         if (!spart_is_active(sp, e))
@@ -341,8 +354,20 @@ void runner_do_stars_ghost(struct runner *r, struct cell *c, int timer) {
         /* We now have a particle whose smoothing length has converged */
         stars_reset_feedback(sp);
 
+
+        // Calculate star age
+	double star_age, current_time_begin = -1;
+	if (with_cosmology) {
+	  star_age = cosmology_get_delta_time_from_scale_factors(cosmo, sp->birth_scale_factor, cosmo->a);
+	} else {
+          current_time_begin =
+            get_integer_time_begin(e->ti_current - 1, sp->time_bin) *
+            e->time_base + e->time_begin;
+	  star_age = current_time_begin - sp->birth_time;
+	}
+
         /* Compute the stellar evolution  */
-        stars_evolve_spart(sp, e->stars_properties, cosmo);
+	stars_evolve_spart(sp, e->stars_properties, cosmo, us, star_age, dt);
       }
 
       /* We now need to treat the particles whose smoothing length had not

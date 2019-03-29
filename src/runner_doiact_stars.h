@@ -89,19 +89,17 @@ void DOSELF1_STARS(struct runner *r, struct cell *c, int timer) {
 
   const struct engine *e = r->e;
   const struct cosmology *cosmo = e->cosmology;
+  const struct stars_props *stars_properties = e->stars_properties;
 
   /* Anything to do here? */
   if (c->hydro.count == 0 || c->stars.count == 0) return;
   if (!cell_is_active_stars(c, e)) return;
 
-  /* Cosmological terms */
-  const float a = cosmo->a;
-  const float H = cosmo->H;
-
   const int scount = c->stars.count;
   const int count = c->hydro.count;
   struct spart *restrict sparts = c->stars.parts;
   struct part *restrict parts = c->hydro.parts;
+  struct xpart *restrict xparts = c->hydro.xparts;
 
   /* Loop over the sparts in ci. */
   for (int sid = 0; sid < scount; sid++) {
@@ -125,6 +123,8 @@ void DOSELF1_STARS(struct runner *r, struct cell *c, int timer) {
       /* Early abort? */
       if (part_is_inhibited(pj, e)) continue;
 
+      struct xpart *restrict xpj = &xparts[pjd];
+
       /* Compute the pairwise distance. */
       const float pjx[3] = {(float)(pj->x[0] - c->loc[0]),
                             (float)(pj->x[1] - c->loc[1]),
@@ -139,7 +139,8 @@ void DOSELF1_STARS(struct runner *r, struct cell *c, int timer) {
 #endif
 
       if (r2 < hig2) {
-        IACT_STARS(r2, dx, hi, pj->h, si, pj, a, H);
+        IACT_STARS(r2, dx, hi, pj->h, si, pj, cosmo, stars_properties,
+		   xpj, e->ti_current);
       }
     } /* loop over the parts in ci. */
   }   /* loop over the sparts in ci. */
@@ -165,6 +166,7 @@ void DO_NONSYM_PAIR1_STARS_NAIVE(struct runner *r, struct cell *restrict ci,
 
   const struct engine *e = r->e;
   const struct cosmology *cosmo = e->cosmology;
+  const struct stars_props *stars_properties = e->stars_properties;
 
   /* Anything to do here? */
   if (cj->hydro.count == 0 || ci->stars.count == 0) return;
@@ -174,10 +176,7 @@ void DO_NONSYM_PAIR1_STARS_NAIVE(struct runner *r, struct cell *restrict ci,
   const int count_j = cj->hydro.count;
   struct spart *restrict sparts_i = ci->stars.parts;
   struct part *restrict parts_j = cj->hydro.parts;
-
-  /* Cosmological terms */
-  const float a = cosmo->a;
-  const float H = cosmo->H;
+  struct xpart *restrict xparts_j = cj->hydro.xparts;
 
   /* Get the relative distance between the pairs, wrapping. */
   double shift[3] = {0.0, 0.0, 0.0};
@@ -210,6 +209,8 @@ void DO_NONSYM_PAIR1_STARS_NAIVE(struct runner *r, struct cell *restrict ci,
       /* Skip inhibited particles. */
       if (part_is_inhibited(pj, e)) continue;
 
+      struct xpart *restrict xpj = &xparts_j[pjd];
+
       /* Compute the pairwise distance. */
       const float pjx[3] = {(float)(pj->x[0] - cj->loc[0]),
                             (float)(pj->x[1] - cj->loc[1]),
@@ -223,7 +224,8 @@ void DO_NONSYM_PAIR1_STARS_NAIVE(struct runner *r, struct cell *restrict ci,
         error("Particle pj not drifted to current time");
 #endif
 
-      if (r2 < hig2) IACT_STARS(r2, dx, hi, pj->h, si, pj, a, H);
+      if (r2 < hig2) IACT_STARS(r2, dx, hi, pj->h, si, pj, cosmo,
+				stars_properties, xpj, e->ti_current);
 
     } /* loop over the parts in cj. */
   }   /* loop over the parts in ci. */
@@ -243,14 +245,11 @@ void DO_SYM_PAIR1_STARS(struct runner *r, struct cell *ci, struct cell *cj,
 
   const struct engine *restrict e = r->e;
   const struct cosmology *restrict cosmo = e->cosmology;
+  const struct stars_props *stars_properties = e->stars_properties;
 
   /* Get the cutoff shift. */
   double rshift = 0.0;
   for (int k = 0; k < 3; k++) rshift += shift[k] * runner_shift[sid][k];
-
-  /* Cosmological terms */
-  const float a = cosmo->a;
-  const float H = cosmo->H;
 
 #if (FUNCTION_TASK_LOOP == TASK_LOOP_DENSITY)
   const int do_ci_stars = (ci->nodeID == e->nodeID) && (ci->stars.count != 0) &&
@@ -290,6 +289,7 @@ void DO_SYM_PAIR1_STARS(struct runner *r, struct cell *ci, struct cell *cj,
     const int count_j = cj->hydro.count;
     struct spart *restrict sparts_i = ci->stars.parts;
     struct part *restrict parts_j = cj->hydro.parts;
+    struct xpart *restrict xparts_j = cj->hydro.xparts;
     const double dj_min = sort_j[0].d;
     const float dx_max_rshift =
         (ci->stars.dx_max_sort + cj->hydro.dx_max_sort) - rshift;
@@ -330,7 +330,9 @@ void DO_SYM_PAIR1_STARS(struct runner *r, struct cell *ci, struct cell *cj,
         /* Skip inhibited particles. */
         if (part_is_inhibited(pj, e)) continue;
 
-        const float hj = pj->h;
+	struct xpart *restrict xpj = &xparts_j[sort_j[pjd].i];
+
+	const float hj = pj->h;
         const float pjx = pj->x[0] - cj->loc[0];
         const float pjy = pj->x[1] - cj->loc[1];
         const float pjz = pj->x[2] - cj->loc[2];
@@ -376,7 +378,8 @@ void DO_SYM_PAIR1_STARS(struct runner *r, struct cell *ci, struct cell *cj,
         /* Hit or miss? */
         if (r2 < hig2) {
 
-          IACT_STARS(r2, dx, hi, hj, spi, pj, a, H);
+          IACT_STARS(r2, dx, hi, hj, spi, pj, cosmo,
+		     stars_properties, xpj, e->ti_current);
         }
       } /* loop over the parts in cj. */
     }   /* loop over the parts in ci. */
@@ -405,6 +408,7 @@ void DO_SYM_PAIR1_STARS(struct runner *r, struct cell *ci, struct cell *cj,
     const int count_i = ci->hydro.count;
     const int count_j = cj->stars.count;
     struct part *restrict parts_i = ci->hydro.parts;
+    struct xpart *restrict xparts_i = ci->hydro.xparts;
     struct spart *restrict sparts_j = cj->stars.parts;
     const double di_max = sort_i[count_i - 1].d - rshift;
     const float dx_max_rshift =
@@ -445,6 +449,8 @@ void DO_SYM_PAIR1_STARS(struct runner *r, struct cell *ci, struct cell *cj,
 
         /* Skip inhibited particles. */
         if (part_is_inhibited(pi, e)) continue;
+
+	struct xpart *restrict xpi = &xparts_i[sort_i[pid].i];
 
         const float hi = pi->h;
         const float pix = pi->x[0] - (cj->loc[0] + shift[0]);
@@ -492,7 +498,8 @@ void DO_SYM_PAIR1_STARS(struct runner *r, struct cell *ci, struct cell *cj,
         /* Hit or miss? */
         if (r2 < hjg2) {
 
-          IACT_STARS(r2, dx, hj, hi, spj, pi, a, H);
+          IACT_STARS(r2, dx, hj, hi, spj, pi, cosmo,
+		     stars_properties, xpi, e->ti_current);
         }
       } /* loop over the parts in ci. */
     }   /* loop over the parts in cj. */
@@ -539,16 +546,14 @@ void DOPAIR1_SUBSET_STARS(struct runner *r, struct cell *restrict ci,
 
   const struct engine *e = r->e;
   const struct cosmology *cosmo = e->cosmology;
+  const struct stars_props *stars_properties = e->stars_properties;
 
   const int count_j = cj->hydro.count;
   struct part *restrict parts_j = cj->hydro.parts;
+  struct xpart *restrict xparts_j = cj->hydro.xparts;
 
   /* Early abort? */
   if (count_j == 0) return;
-
-  /* Cosmological terms */
-  const float a = cosmo->a;
-  const float H = cosmo->H;
 
   /* Pick-out the sorted lists. */
   const struct entry *restrict sort_j = cj->hydro.sort[sid];
@@ -579,6 +584,8 @@ void DOPAIR1_SUBSET_STARS(struct runner *r, struct cell *restrict ci,
         /* Skip inhibited particles. */
         if (part_is_inhibited(pj, e)) continue;
 
+	struct xpart *restrict xpj = &xparts_j[sort_j[pjd].i];
+
         const double pjx = pj->x[0];
         const double pjy = pj->x[1];
         const double pjz = pj->x[2];
@@ -598,7 +605,8 @@ void DOPAIR1_SUBSET_STARS(struct runner *r, struct cell *restrict ci,
 
         /* Hit or miss? */
         if (r2 < hig2) {
-          IACT_STARS(r2, dx, hi, pj->h, spi, pj, a, H);
+          IACT_STARS(r2, dx, hi, pj->h, spi, pj, cosmo,
+		     stars_properties, xpj, e->ti_current);
         }
       } /* loop over the parts in cj. */
     }   /* loop over the sparts in ci. */
@@ -629,6 +637,8 @@ void DOPAIR1_SUBSET_STARS(struct runner *r, struct cell *restrict ci,
         /* Skip inhibited particles. */
         if (part_is_inhibited(pj, e)) continue;
 
+	struct xpart *restrict xpj = &xparts_j[sort_j[pjd].i];
+
         const double pjx = pj->x[0];
         const double pjy = pj->x[1];
         const double pjz = pj->x[2];
@@ -648,7 +658,8 @@ void DOPAIR1_SUBSET_STARS(struct runner *r, struct cell *restrict ci,
 
         /* Hit or miss? */
         if (r2 < hig2) {
-          IACT_STARS(r2, dx, hi, pj->h, spi, pj, a, H);
+          IACT_STARS(r2, dx, hi, pj->h, spi, pj, cosmo,
+		     stars_properties, xpj, e->ti_current);
         }
       } /* loop over the parts in cj. */
     }   /* loop over the sparts in ci. */
@@ -679,16 +690,14 @@ void DOPAIR1_SUBSET_STARS_NAIVE(struct runner *r, struct cell *restrict ci,
 #endif
   const struct engine *e = r->e;
   const struct cosmology *cosmo = e->cosmology;
+  const struct stars_props *stars_properties = e->stars_properties;
 
   const int count_j = cj->hydro.count;
   struct part *restrict parts_j = cj->hydro.parts;
+  struct xpart *restrict xparts_j = cj->hydro.xparts;
 
   /* Early abort? */
   if (count_j == 0) return;
-
-  /* Cosmological terms */
-  const float a = cosmo->a;
-  const float H = cosmo->H;
 
   /* Loop over the parts_i. */
   for (int pid = 0; pid < scount; pid++) {
@@ -714,6 +723,8 @@ void DOPAIR1_SUBSET_STARS_NAIVE(struct runner *r, struct cell *restrict ci,
       /* Skip inhibited particles */
       if (part_is_inhibited(pj, e)) continue;
 
+      struct xpart *restrict xpj = &xparts_j[pjd];
+      
       /* Compute the pairwise distance. */
       float r2 = 0.0f;
       float dx[3];
@@ -729,7 +740,8 @@ void DOPAIR1_SUBSET_STARS_NAIVE(struct runner *r, struct cell *restrict ci,
 #endif
       /* Hit or miss? */
       if (r2 < hig2) {
-        IACT_STARS(r2, dx, hi, pj->h, spi, pj, a, H);
+        IACT_STARS(r2, dx, hi, pj->h, spi, pj, cosmo,
+		   stars_properties, xpj, e->ti_current);
       }
     } /* loop over the parts in cj. */
   }   /* loop over the parts in ci. */
@@ -755,13 +767,11 @@ void DOSELF1_SUBSET_STARS(struct runner *r, struct cell *restrict ci,
 
   const struct engine *e = r->e;
   const struct cosmology *cosmo = e->cosmology;
-
-  /* Cosmological terms */
-  const float a = cosmo->a;
-  const float H = cosmo->H;
+  const struct stars_props *stars_properties = e->stars_properties;
 
   const int count_i = ci->hydro.count;
   struct part *restrict parts_j = ci->hydro.parts;
+  struct xpart *restrict xparts_j = ci->hydro.xparts;
 
   /* Early abort? */
   if (count_i == 0) return;
@@ -791,6 +801,8 @@ void DOSELF1_SUBSET_STARS(struct runner *r, struct cell *restrict ci,
       /* Early abort? */
       if (part_is_inhibited(pj, e)) continue;
 
+      struct xpart *restrict xpj = &xparts_j[pjd];
+
       /* Compute the pairwise distance. */
       const float pjx[3] = {(float)(pj->x[0] - ci->loc[0]),
                             (float)(pj->x[1] - ci->loc[1]),
@@ -806,7 +818,8 @@ void DOSELF1_SUBSET_STARS(struct runner *r, struct cell *restrict ci,
 
       /* Hit or miss? */
       if (r2 < hig2) {
-        IACT_STARS(r2, dx, hi, pj->h, spi, pj, a, H);
+        IACT_STARS(r2, dx, hi, pj->h, spi, pj, cosmo,
+		   stars_properties, xpj, e->ti_current);
       }
     } /* loop over the parts in cj. */
   }   /* loop over the parts in ci. */
