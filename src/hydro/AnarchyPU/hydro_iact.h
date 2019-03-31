@@ -203,7 +203,7 @@ __attribute__((always_inline)) INLINE static void runner_iact_gradient(
   const float r = sqrtf(r2);
   const float r_inv = 1.f / r;
   const float ci = pi->force.soundspeed;
-  const float cj = pi->force.soundspeed;
+  const float cj = pj->force.soundspeed;
 
   /* Cosmology terms for the signal velocity */
   const float fac_mu = pow_three_gamma_minus_five_over_two(a);
@@ -269,7 +269,7 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_gradient(
   const float r = sqrtf(r2);
   const float r_inv = 1.f / r;
   const float ci = pi->force.soundspeed;
-  const float cj = pi->force.soundspeed;
+  const float cj = pj->force.soundspeed;
 
   /* Cosmology terms for the signal velocity */
   const float fac_mu = pow_three_gamma_minus_five_over_two(a);
@@ -369,7 +369,7 @@ __attribute__((always_inline)) INLINE static void runner_iact_force(
   const float mu_ij = fac_mu * r_inv * omega_ij; /* This is 0 or negative */
 
   /* Compute sound speeds and signal velocity */
-  const float v_sig = 0.5 * (pi->viscosity.v_sig + pj->viscosity.v_sig);
+  const float v_sig = 0.5f * (pi->viscosity.v_sig + pj->viscosity.v_sig);
 
   /* Balsara term */
   const float balsara_i = pi->force.balsara;
@@ -411,12 +411,12 @@ __attribute__((always_inline)) INLINE static void runner_iact_force(
                               wj_dr * dvdr * r_inv;
 
   /* Viscosity term */
-  const float visc_du_term = 0.5 * visc_acc_term * dvdr_Hubble;
+  const float visc_du_term = 0.5f * visc_acc_term * dvdr_Hubble;
 
   /* Diffusion term */
   const float v_diff =
       max(pi->force.soundspeed + pj->force.soundspeed + dvdr_Hubble, 0.f);
-  const float alpha_diff = 0.5 * (pi->diffusion.alpha + pj->diffusion.alpha);
+  const float alpha_diff = 0.5f * (pi->diffusion.alpha + pj->diffusion.alpha);
   /* wi_dx + wj_dx / 2 is F_ij */
   const float diff_du_term =
       alpha_diff * fac_mu * v_diff * (pi->u - pj->u) * (wi_dr + wj_dr) / rho_ij;
@@ -500,7 +500,7 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_force(
   const float mu_ij = fac_mu * r_inv * omega_ij; /* This is 0 or negative */
 
   /* Compute sound speeds and signal velocity */
-  const float v_sig = 0.5 * (pi->viscosity.v_sig + pj->viscosity.v_sig);
+  const float v_sig = 0.5f * (pi->viscosity.v_sig + pj->viscosity.v_sig);
 
   /* Balsara term */
   const float balsara_i = pi->force.balsara;
@@ -535,12 +535,12 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_force(
                               wi_dr * dvdr * r_inv;
 
   /* Viscosity term */
-  const float visc_du_term = 0.5 * visc_acc_term * dvdr_Hubble;
+  const float visc_du_term = f * visc_acc_term * dvdr_Hubble;
 
   /* Diffusion term */
   const float v_diff =
       max(pi->force.soundspeed + pj->force.soundspeed + dvdr_Hubble, 0.f);
-  const float alpha_diff = 0.5 * (pi->diffusion.alpha + pj->diffusion.alpha);
+  const float alpha_diff = 0.5f * (pi->diffusion.alpha + pj->diffusion.alpha);
   /* wi_dx + wj_dx / 2 is F_ij */
   const float diff_du_term =
       alpha_diff * fac_mu * v_diff * (pi->u - pj->u) * (wi_dr + wj_dr) / rho_ij;
