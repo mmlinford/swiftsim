@@ -695,11 +695,12 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
   /* Here we need to update the artificial viscosity */
 
   /* We use in this function that h is the radius of support */
-  const float h_physical = p->h * cosmo->a * kernel_gamma;
+  const float kernel_support_physical = p->h * cosmo->a * kernel_gamma;
   const float v_sig_physical = p->viscosity.v_sig * cosmo->a_factor_sound_speed;
   const float soundspeed_physical = hydro_get_physical_soundspeed(p, cosmo);
 
-  const float sound_crossing_time_inverse = soundspeed_physical / h_physical;
+  const float sound_crossing_time_inverse =
+      soundspeed_physical / kernel_support_physical;
 
   /* Construct time differential of div.v implicitly following the ANARCHY spec
    */
@@ -711,7 +712,8 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
 
   /* Construct the source term for the AV; if shock detected this is _positive_
    * as div_v_dt should be _negative_ before the shock hits */
-  const float S = h_physical * h_physical * max(0.f, -1.f * div_v_dt);
+  const float S = kernel_support_physical * kernel_support_physical *
+                  max(0.f, -1.f * div_v_dt);
   /* 0.25 factor comes from our definition of v_sig (sum of soundspeeds rather
    * than mean). */
   /* Note this is v_sig_physical squared, not comoving */
@@ -742,14 +744,14 @@ __attribute__((always_inline)) INLINE static void hydro_prepare_force(
   /* Now for the diffusive alpha */
 
   const float diffusion_timescale_physical_inverse =
-      v_sig_physical / h_physical;
+      v_sig_physical / kernel_support_physical;
 
   const float sqrt_u = sqrtf(p->u);
   /* Calculate initial value of alpha dt before bounding */
   /* Evolution term: following Schaller+ 2015. This is made up of several
      cosmology factors: physical h, sound speed from u / sqrt(u), and the
      1 / a^2 coming from the laplace operator. */
-  float alpha_diff_dt = hydro_props->diffusion.beta * h_physical *
+  float alpha_diff_dt = hydro_props->diffusion.beta * kernel_support_physical *
                         p->diffusion.laplace_u * cosmo->a_factor_sound_speed /
                         (sqrt_u * cosmo->a * cosmo->a);
   /* Decay term: not documented in Schaller+ 2015 but was present
