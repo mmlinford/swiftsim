@@ -535,7 +535,7 @@ __attribute__((always_inline)) INLINE static void runner_iact_nonsym_force(
                               wi_dr * dvdr * r_inv;
 
   /* Viscosity term */
-  const float visc_du_term = f * visc_acc_term * dvdr_Hubble;
+  const float visc_du_term = 0.5f * visc_acc_term * dvdr_Hubble;
 
   /* Diffusion term */
   const float v_diff =
