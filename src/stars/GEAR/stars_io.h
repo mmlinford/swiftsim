@@ -110,10 +110,9 @@ INLINE static void stars_props_init_physics(
     const struct cosmology *cosmo) {
 
   /* Supernovae energy */
-  sp->feedback.energy_per_supernovae =
-    parser_get_param_float(params, "GEARFeedback:SupernovaeEnergy_erg");
-  sp->feedback.energy_per_supernovae *=
-    units_cgs_conversion_factor(us, UNIT_CONV_ENERGY);
+  double e_feedback = parser_get_param_double(params, "GEARFeedback:SupernovaeEnergy_erg");
+  e_feedback /= units_cgs_conversion_factor(us, UNIT_CONV_ENERGY);
+  sp->feedback.energy_per_supernovae = e_feedback;
 
   /* Thermal time */
   sp->feedback.thermal_time =

@@ -100,6 +100,7 @@ runner_iact_nonsym_stars_feedback(
 
   /* Get the kernel for hi. */
   float hi_inv = 1.0f / hi;
+  float hi_inv_dim = pow_dimension(hi_inv);       /* 1/h^d */
   float hid_inv = pow_dimension_plus_one(hi_inv); /* 1/h^(d+1) */
   float xi = r * hi_inv;
   float wi, wi_dx;
@@ -129,21 +130,22 @@ runner_iact_nonsym_stars_feedback(
   si->has_exploded = -1;
 
   /* Get a few variables */
-  /* const double e_sn = stars_properties->feedback.energy_per_supernovae; */
+  const double e_sn = stars_properties->feedback.energy_per_supernovae;
   const double m_ej = stars_properties->feedback.mass_ejected;
-  /* const double e_sn_normalized = e_sn * m_ej / si->density.rho_gas; */
-  /* const double u_old = hydro_get_physical_internal_energy(pj, xp, cosmo); */
+  const double e_sn_normalized = e_sn * m_ej / si->density.rho_gas;
+  const double u_old = hydro_get_physical_internal_energy(pj, xp, cosmo);
 
   /* Mass received */
-  const double dm = m_ej * wi;
+  const double wij = mj * wi * hi_inv_dim / si->density.rho_gas;
+  const double dm = m_ej * wij;
 
   /* Energy received */
-  /* const double du = m_ej * e_sn_normalized * wi / (mj + dm); */
+  const double du = m_ej * e_sn_normalized * wij / (mj + dm);
 
   /* TODO updates everything in between steps */
   hydro_set_mass(pj, mj + dm);
   stars_set_mass(si, si->mass - dm);
-  /* message("%g %g %g", u_old, du, si->density.rho_gas); */
+  /* error("%g %g %g %g", u_old, du, si->density.rho_gas, e_sn); */
   /* hydro_set_physical_internal_energy(pj, xp, cosmo, u_old + du); */
   /* hydro_set_drifted_physical_internal_energy(pj, cosmo, u_old + du); */
 
