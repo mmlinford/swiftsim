@@ -11,7 +11,7 @@ TimeIntegration:
   time_begin: 0.
   time_end:   1.02e-4 # ~ 100 myr
   dt_min:     1e-14
-  dt_max:     5e-8
+  dt_max:     5e-5
 
 # Parameters governing the snapshots
 Snapshots:
