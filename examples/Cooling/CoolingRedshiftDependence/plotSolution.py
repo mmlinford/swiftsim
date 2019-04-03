@@ -99,11 +99,14 @@ def get_data(handle: float, n_snaps: int):
             / (data.metadata.scale_factor ** 3)
         )
 
-        energies.append(
-            np.mean((data.gas.internal_energy * data.gas.masses).to(erg).value)
-            * data.metadata.scale_factor ** (2)
-        )
-        radiated_energies.append(np.mean(data.gas.radiated_energy.to(erg).value))
+        try:
+            energies.append(
+                np.mean((data.gas.internal_energy * data.gas.masses).to(erg).value)
+                * data.metadata.scale_factor ** (2)
+            )
+            radiated_energies.append(np.mean(data.gas.radiated_energy.to(erg).value))
+        except AttributeError:
+            continue
 
     return times, temps, densities, energies, radiated_energies
 
@@ -142,23 +145,12 @@ def plot_single_data(
         label_radiated = ""
         label_sum = ""
 
-    ax[2].plot(
-        data[0], data[3], label=label_energy, ls="dotted", C=f"C{run}"
-    )
+    ax[2].plot(data[0], data[3], label=label_energy, ls="dotted", C=f"C{run}")
+
+    ax[2].plot(data[0], data[4], label=label_radiated, ls="dashed", C=f"C{run}")
 
     ax[2].plot(
-        data[0],
-        data[4],
-        label=label_radiated,
-        ls="dashed",
-        C=f"C{run}",
-    )
-
-    ax[2].plot(
-        data[0],
-        [x + y for x, y in zip(*data[3:5])],
-        label=label_sum,
-        C=f"C{run}",
+        data[0], [x + y for x, y in zip(*data[3:5])], label=label_sum, C=f"C{run}"
     )
 
     return
@@ -191,7 +183,13 @@ def make_plot(handles, names, timestep_names, n_snaps=100):
     info = get_data_dump(load(f"data/{handles[0]}_0000.hdf5").metadata)
 
     info_axis.text(
-        0.5, 0.45, info, ha="center", va="center", fontsize=7, transform=info_axis.transAxes
+        0.5,
+        0.45,
+        info,
+        ha="center",
+        va="center",
+        fontsize=7,
+        transform=info_axis.transAxes,
     )
 
     info_axis.axis("off")
