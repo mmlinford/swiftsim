@@ -122,8 +122,8 @@ __attribute__((always_inline)) INLINE static void cooling_cool_part(
   /* Nothing to do here? */
   if (dt == 0.) return;
 
-  /* Current energy */
-  // const float u_old = hydro_get_physical_internal_energy(p, xp, cosmo);
+  /* Current energy (in internal units) */
+  const float u_old_com = hydro_get_comoving_internal_energy(p, xp);
 
   /* Y' */
   const float hydro_du_dt_com = hydro_get_comoving_internal_energy_dt(p);
@@ -133,52 +133,53 @@ __attribute__((always_inline)) INLINE static void cooling_cool_part(
       cooling_rate_cgs(cosmo, hydro_props, cooling, p);
 
   /* Convert to internal units */
-  float cooling_du_dt =
+  const float cooling_du_dt_physical =
       cooling_du_dt_cgs * cooling->conv_factor_energy_rate_from_cgs;
 
   /* Add cosmological term to get Y_cooling' */
-  cooling_du_dt *= cosmo->a * cosmo->a / cosmo->a_factor_internal_energy;
+  const float cooling_du_dt = cooling_du_dt_physical * cosmo->a * cosmo->a /
+                              cosmo->a_factor_internal_energy;
 
   /* Y_total' */
   float total_du_dt = hydro_du_dt_com + cooling_du_dt;
 
   /* We now need to check that we are not going to go below any of the limits */
 
-  /* /\* Limit imposed by the entropy floor *\/ */
-  /* const float A_floor = entropy_floor(p, cosmo, floor_props); */
-  /* const float rho = hydro_get_physical_density(p, cosmo); */
-  /* const float u_floor = gas_internal_energy_from_entropy(rho, A_floor); */
+  /* Limit imposed by the entropy floor (comoving)
+   * (Recall entropy is the same in physical and comoving frames) */
+  const float A_floor_com = entropy_floor(p, cosmo, floor_props);
+  const float rho_com = hydro_get_comoving_density(p);
+  const float u_floor_com =
+      gas_internal_energy_from_entropy(rho_com, A_floor_com);
 
-  /* /\* Absolute minimum *\/ */
-  /* const float u_minimal = hydro_props->minimal_internal_energy; */
+  /* Absolute minimum */
+  const float u_minimal_com =
+      hydro_props->minimal_internal_energy / cosmo->a_factor_internal_energy;
 
-  /* /\* Largest of both limits *\/ */
-  /* const float u_limit = max(u_minimal, u_floor); */
+  /* Largest of both limits */
+  const float u_limit_com = max(u_minimal_com, u_floor_com);
 
-  /* /\* First, check whether we may end up below the minimal energy after */
-  /*  * this step 1/2 kick + another 1/2 kick that could potentially be for */
-  /*  * a time-step twice as big. We hence check for 1.5 delta_t. *\/ */
-  /* if (u_old + total_du_dt * 1.5 * dt_therm < u_limit) { */
-  /*   total_du_dt = (u_limit - u_old) / (1.5f * dt_therm); */
-  /* } */
+  /* First, check whether we may end up below the minimal energy after
+   * this step 1/2 kick + another 1/2 kick that could potentially be for
+   * a time-step twice as big. We hence check for 1.5 delta_t. */
+  if (u_old_com + total_du_dt * 1.5 * dt_therm < u_limit_com) {
+    total_du_dt = (u_limit_com - u_old_com) / (1.5f * dt_therm);
+  }
 
-  /* /\* Second, check whether the energy used in the prediction could get
-   * negative. */
-  /*  * We need to check for the 1/2 dt kick followed by a full time-step drift
-   */
-  /*  * that could potentially be for a time-step twice as big. We hence check
-   */
-  /*  * for 2.5 delta_t but this time against 0 energy not the minimum *\/ */
-  /* if (u_old + total_du_dt * 2.5 * dt_therm < 0.) { */
-  /*   total_du_dt = -u_old / ((2.5f + 0.0001f) * dt_therm); */
-  /* } */
+  /* Second, check whether the energy used in the prediction could get negative.
+   * We need to check for the 1/2 dt kick followed by a full time-step drift
+   * that could potentially be for a time-step twice as big. We hence check
+   * for 2.5 delta_t but this time against 0 energy not the minimum */
+  if (u_old_com + total_du_dt * 2.5 * dt_therm < 0.) {
+    total_du_dt = -u_old_com / ((2.5f + 0.0001f) * dt_therm);
+  }
 
   /* Update the internal energy time derivative */
   hydro_set_comoving_internal_energy_dt(p, total_du_dt);
 
   /* Store the radiated energy (assuming dt will not change) */
-  /* xp->cooling_data.radiated_energy += */
-  /*     -hydro_get_mass(p) * (total_du_dt - hydro_du_dt) * dt_therm; */
+  xp->cooling_data.radiated_energy +=
+      -hydro_get_mass(p) * cooling_du_dt_physical * dt;
 }
 
 /**
