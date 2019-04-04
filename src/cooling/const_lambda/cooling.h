@@ -276,7 +276,7 @@ INLINE static float cooling_get_temperature(
   const double mu_ionised = hydro_props->mu_ionised;
 
   /* Particle temperature */
-  const double u = hydro_get_physical_internal_energy(p, xp, cosmo);
+  const double u = hydro_get_drifted_physical_internal_energy(p, cosmo);
 
   /* Temperature over mean molecular weight */
   const double T_over_mu = hydro_gamma_minus_one * u * m_H / k_B;
