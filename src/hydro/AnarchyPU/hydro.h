@@ -381,6 +381,32 @@ __attribute__((always_inline)) INLINE static void hydro_set_physical_entropy(
 }
 
 /**
+ * @brief Sets the drifted physical entropy of a particle
+ *
+ * @param p The particle of interest.
+ * @param cosmo Cosmology data structure
+ * @param entropy The physical entropy
+ */
+__attribute__((always_inline)) INLINE static void
+hydro_set_drifted_physical_entropy(struct part *p,
+                                   const struct cosmology *cosmo,
+                                   const float entropy) {
+
+  /* Note there is no conversion from physical to comoving entropy */
+  const float comoving_entropy = entropy;
+
+  p->u = gas_internal_energy_from_entropy(p->rho, comoving_entropy);
+
+  /* Now recompute the extra quantities */
+
+  /* Compute the sound speed */
+  const float soundspeed = hydro_get_comoving_soundspeed(p);
+
+  /* Update variables. */
+  p->force.soundspeed = soundspeed;
+}
+
+/**
  * @brief Sets the physical internal energy of a particle
  *
  * @param p The particle of interest.
@@ -441,8 +467,8 @@ __attribute__((always_inline)) INLINE static float hydro_compute_timestep(
   const float dt_cfl = 2.f * kernel_gamma * CFL_condition * cosmo->a * p->h /
                        (cosmo->a_factor_sound_speed * p->viscosity.v_sig);
 
-  const float dt_u_change =
-      (p->u_dt != 0.0f) ? fabsf(const_max_u_change * p->u / p->u_dt) : FLT_MAX;
+  const float dt_u_change = FLT_MAX;
+  //(p->u_dt != 0.0f) ? fabsf(const_max_u_change * p->u / p->u_dt) : FLT_MAX;
 
   return fminf(dt_cfl, dt_u_change);
 }
