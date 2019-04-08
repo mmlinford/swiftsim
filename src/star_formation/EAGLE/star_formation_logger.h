@@ -207,12 +207,12 @@ INLINE static void star_formation_logger_init_engine(
  */
 INLINE static void star_formation_logger_write_to_log_file(
     FILE *fp, const double time, const double a, const double z,
-    const struct star_formation_history sf, const int step) {
+    const struct star_formation_history sf, const int step, const double total_SFH, const double active_SFH, const double inactive_SFH) {
 
   /* Calculate the total SFR */
   const float totalSFR = sf.SFR_active + sf.SFR_inactive;
-  fprintf(fp, "%6d %16e %12.7f %12.7f %14e %14e %14e %14e\n", step, time, a, z,
-          sf.new_stellar_mass, sf.SFR_active, sf.SFRdt_active, totalSFR);
+  fprintf(fp, "%6d %16e %12.7f %12.7f %14e %14e %14e %14e %14e %14e %14e\n", step, time, a, z,
+          sf.new_stellar_mass, sf.SFR_active, sf.SFRdt_active, totalSFR, total_SFH, active_SFH, inactive_SFH);
 }
 
 /**
