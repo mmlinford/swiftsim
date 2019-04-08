@@ -2421,6 +2421,59 @@ void engine_collect_end_of_step_recurse(struct cell *c,
     }
   }
 
+    // MATTHIEU: START
+    
+    /* Check active case */
+    double total_SFH = 0.f;
+    double active_SFH = 0.f;
+    double inactive_SFH = 0.f;
+    
+    for (int k = 0; k < c->hydro.count; k++) {
+      struct xpart *xp = &c->hydro.xparts[k];
+      struct part *p = &c->hydro.parts[k];
+      
+      if (!part_is_inhibited(p,e)) {
+	
+	total_SFH += max(0.f,xp->sf_data.SFR);
+	
+	if (part_is_active(p, e)) {
+	  
+	  active_SFH += max(0.f,xp->sf_data.SFR);
+	} else {		
+	  inactive_SFH += max(0.f,xp->sf_data.SFR);
+	}
+      }	
+    }
+
+  const double total_logger = c->stars.sfh.SFR_active + c->stars.sfh.SFR_inactive;
+  const double active_logger = c->stars.sfh.SFR_active;
+  const double inactive_logger = c->stars.sfh.SFR_inactive;
+
+  double dummy1, dummy2, dummy3;
+  
+  if(compare_values(total_SFH, total_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+    error("Total SF does NOT match logger: %e true: %e", total_logger, total_SFH);
+
+  int active_wrong = compare_values(active_SFH, active_logger, 0.0001, &dummy1, &dummy2, &dummy3);
+  int inactive_wrong = compare_values(inactive_SFH, inactive_logger, 0.0001, &dummy1, &dummy2, &dummy3);
+
+  //if(cell_is_starting_hydro(c, e))
+  //message("is_active=%d", cell_is_starting_hydro(c, e));
+  
+  if(active_wrong || inactive_wrong) {
+
+    message("cell->depth=%d is_active=%d", c->depth, cell_is_starting_hydro(c, e));
+    
+    message("Active SF does NOT match logger: %e true: %e", active_logger, active_SFH);
+    message("Inactive SF does NOT match logger: %e true: %e", inactive_logger, inactive_SFH);
+
+    error("OOOOO");
+
+  }
+
+  // MATTHIEU: END
+
+  
   /* Store the collected values in the cell. */
   c->hydro.ti_end_min = ti_hydro_end_min;
   c->hydro.ti_end_max = ti_hydro_end_max;
@@ -2514,6 +2567,59 @@ void engine_collect_end_of_step_mapper(void *map_data, int num_elements,
       c->grav.updated = 0;
       c->stars.updated = 0;
     }
+
+    // MATTHIEU: START
+    
+    /* Check active case */
+    double total_SFH = 0.f;
+    double active_SFH = 0.f;
+    double inactive_SFH = 0.f;
+    
+    for (int k = 0; k < c->hydro.count; k++) {
+      struct xpart *xp = &c->hydro.xparts[k];
+      struct part *p = &c->hydro.parts[k];
+      
+      if (!part_is_inhibited(p,e)) {
+	
+	total_SFH += max(0.f,xp->sf_data.SFR);
+	
+	if (part_is_active(p, e)) {
+	  
+	  active_SFH += max(0.f,xp->sf_data.SFR);
+	} else {		
+	  inactive_SFH += max(0.f,xp->sf_data.SFR);
+	}
+      }	
+    }
+
+  const double total_logger = c->stars.sfh.SFR_active + c->stars.sfh.SFR_inactive;
+  const double active_logger = c->stars.sfh.SFR_active;
+  const double inactive_logger = c->stars.sfh.SFR_inactive;
+
+  double dummy1, dummy2, dummy3;
+  
+  if(compare_values(total_SFH, total_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+    error("Total SF does NOT match logger: %e true: %e", total_logger, total_SFH);
+
+  int active_wrong = compare_values(active_SFH, active_logger, 0.0001, &dummy1, &dummy2, &dummy3);
+  int inactive_wrong = compare_values(inactive_SFH, inactive_logger, 0.0001, &dummy1, &dummy2, &dummy3);
+
+  //if(cell_is_starting_hydro(c, e))
+  //message("is_active=%d", cell_is_starting_hydro(c, e));
+  
+  if(active_wrong || inactive_wrong) {
+
+    message("cell->depth=%d is_active=%d", c->depth, cell_is_starting_hydro(c, e));
+    
+    message("Active SF does NOT match logger: %e true: %e", active_logger, active_SFH);
+    message("Inactive SF does NOT match logger: %e true: %e", inactive_logger, inactive_SFH);
+
+    error("OOOOO");
+
+  }
+
+  // MATTHIEU: END
+
   }
 
   /* Let's write back to the global data.
@@ -3140,11 +3246,43 @@ void engine_step(struct engine *e) {
     fflush(stdout);
 #endif
 
+
+    fflush(stdout);
+    
+  /* Total SFH from brute force */
+    
+    
+
+    double total_SFH = 0.f;
+    double active_SFH = 0.f;
+    double inactive_SFH = 0.f;
+    
+    for (size_t k = 0; k < e->s->nr_parts; k++) {
+      struct xpart *xp = &e->s->xparts[k];
+      struct part *p = &e->s->parts[k];
+      
+      if (!part_is_inhibited(p,e)) {
+	
+	total_SFH += max(0.f,xp->sf_data.SFR);
+	
+	if (part_is_active(p, e)) {
+	  
+	  active_SFH += max(0.f,xp->sf_data.SFR);
+	} else {		
+	  inactive_SFH += max(0.f,xp->sf_data.SFR);
+	}
+      }	
+    }
+
+    message("");
+    message("TRUE  : active: %e    inactive: %e   Total: %e", active_SFH, inactive_SFH, total_SFH);
+    message("LOGGER: active: %e    inactive: %e   Total: %e", e->sfh.SFR_active, e->sfh.SFR_inactive, e->sfh.SFR_active + e->sfh.SFR_inactive);
+    
     /* Write the star formation information to the file */
     if (e->policy & engine_policy_star_formation) {
       star_formation_logger_write_to_log_file(e->sfh_logger, e->time,
                                               e->cosmology->a, e->cosmology->z,
-                                              e->sfh, e->step);
+                                              e->sfh, e->step, total_SFH, active_SFH, inactive_SFH);
 
 #ifdef SWIFT_DEBUG_CHECKS
       fflush(e->sfh_logger);
@@ -3176,6 +3314,8 @@ void engine_step(struct engine *e) {
   engine_current_step = e->step;
   e->step_props = engine_step_prop_none;
 
+  message("RUNNING step %d", e->step);
+  
   /* When restarting, move everyone to the current time. */
   if (e->restarting) engine_drift_all(e, /*drift_mpole=*/1);
 

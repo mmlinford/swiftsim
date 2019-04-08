@@ -34,6 +34,8 @@
 #include <mpi.h>
 #endif
 
+#include "tools.h"
+
 /* This object's header. */
 #include "runner.h"
 
@@ -593,6 +595,49 @@ void runner_do_star_formation(struct runner *r, struct cell *c, int timer) {
   /* Anything to do here? */
   if (!cell_is_active_hydro(c, e)) {
     star_formation_logger_log_inactive_cell(&c->stars.sfh);
+
+    // MATTHIEU: START
+    
+  /* Check active case */
+  double total_SFH = 0.f;
+  double active_SFH = 0.f;
+  double inactive_SFH = 0.f;
+  
+  for (int k = 0; k < c->hydro.count; k++) {
+    struct xpart *xp = &c->hydro.xparts[k];
+    struct part *p = &c->hydro.parts[k];
+    
+    if (!part_is_inhibited(p,e)) {
+      
+      total_SFH += max(0.f,xp->sf_data.SFR);
+      
+      if (part_is_active(p, e)) {
+	
+	active_SFH += max(0.f,xp->sf_data.SFR);
+      } else {		
+	inactive_SFH += max(0.f,xp->sf_data.SFR);
+      }
+    }	
+  }
+
+  const double total_logger = c->stars.sfh.SFR_active + c->stars.sfh.SFR_inactive;
+  const double active_logger = c->stars.sfh.SFR_active;
+  const double inactive_logger = c->stars.sfh.SFR_inactive;
+
+  double dummy1, dummy2, dummy3;
+  
+  if(compare_values(total_SFH, total_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+    error("Total SF does NOT match logger: %e true: %e", total_logger, total_SFH);
+
+  if(compare_values(active_SFH, active_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+    error("Active SF does NOT match logger: %e true: %e", active_logger, active_SFH);
+
+  if(compare_values(inactive_SFH, inactive_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+    error("Inactive SF does NOT match logger: %e true: %e", inactive_logger, inactive_SFH);
+
+
+  // MATTHIEU: END
+    
     return;
   }
   star_formation_logger_log_active_cell(&c->stars.sfh);
@@ -655,6 +700,8 @@ void runner_do_star_formation(struct runner *r, struct cell *c, int timer) {
             /* Convert the gas particle to a star particle */
             struct spart *sp = cell_convert_part_to_spart(e, c, p, xp);
 
+	    message("Formed a star!!!");
+	    
             /* Copy the properties of the gas particle to the star particle */
             star_formation_copy_properties(p, xp, sp, e, sf_props, cosmo,
                                            with_cosmology);
@@ -687,6 +734,47 @@ void runner_do_star_formation(struct runner *r, struct cell *c, int timer) {
     runner_do_stars_sort(r, c, 0x1FFF, /*cleanup=*/0, /*timer=*/0);
   }
 
+    // MATTHIEU: START
+  
+  /* Check active case */
+  double total_SFH = 0.f;
+  double active_SFH = 0.f;
+  double inactive_SFH = 0.f;
+  
+  for (int k = 0; k < c->hydro.count; k++) {
+    struct xpart *xp = &c->hydro.xparts[k];
+    struct part *p = &c->hydro.parts[k];
+    
+    if (!part_is_inhibited(p,e)) {
+      
+      total_SFH += max(0.f,xp->sf_data.SFR);
+      
+      if (part_is_active(p, e)) {
+	
+	active_SFH += max(0.f,xp->sf_data.SFR);
+      } else {		
+	inactive_SFH += max(0.f,xp->sf_data.SFR);
+      }
+    }	
+  }
+
+  const double total_logger = c->stars.sfh.SFR_active + c->stars.sfh.SFR_inactive;
+  const double active_logger = c->stars.sfh.SFR_active;
+  const double inactive_logger = c->stars.sfh.SFR_inactive;
+
+  double dummy1, dummy2, dummy3;
+  
+  if(compare_values(total_SFH, total_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+    error("Total SF does NOT match logger: %e true: %e", total_logger, total_SFH);
+
+  if(compare_values(active_SFH, active_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+    error("Active SF does NOT match logger: %e true: %e", active_logger, active_SFH);
+
+  if(compare_values(inactive_SFH, inactive_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+    error("Inactive SF does NOT match logger: %e true: %e", inactive_logger, inactive_SFH);
+
+    // MATTHIEU: END
+  
   if (timer) TIMER_TOC(timer_do_star_formation);
 }
 
