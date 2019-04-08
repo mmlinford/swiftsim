@@ -2581,6 +2581,31 @@ void engine_collect_end_of_step(struct engine *e, int apply) {
       e->s->tot_cells, e->sched.nr_tasks,
       (float)e->sched.nr_tasks / (float)e->s->tot_cells, data.sfh);
 
+  /* Brute force EAGLE logger (DEBUGGING purpuse only */
+  const int number_of_parts = s->nr_parts;
+  e->totalSFH = 0.f;
+  e->activeSFH = 0.f;
+  e->inactiveSFH = 0.f;
+  double total_SFH = 0.f;
+  double active_SFH = 0.f;
+  double inactive_SFH = 0.f;
+  for (int k = 0; k < number_of_parts; k++) {
+    struct xpart *xp = &s->xparts[k];
+    struct part *p = &s->parts[k];
+    if (!part_is_inhibited(p,e)) {
+      total_SFH += max(0.f,xp->sf_data.SFR);
+      if (part_is_active(p, e)) {
+        active_SFH += max(0.f,xp->sf_data.SFR);
+      } else {
+        inactive_SFH += max(0.f,xp->sf_data.SFR);
+      }
+    }
+  }
+  e->totalSFH = total_SFH;
+  e->activeSFH = active_SFH;
+  e->inactiveSFH = inactive_SFH;
+  //message("Total SFH = %e",total_SFH);
+
 /* Aggregate collective data from the different nodes for this step. */
 #ifdef WITH_MPI
   collectgroup1_reduce(&e->collect_group1);
@@ -2651,6 +2676,7 @@ void engine_collect_end_of_step(struct engine *e, int apply) {
 
   /* Apply to the engine, if requested. */
   if (apply) collectgroup1_apply(&e->collect_group1, e);
+
 
   if (e->verbose)
     message("took %.3f %s.", clocks_from_ticks(getticks() - tic),
@@ -3120,7 +3146,7 @@ void engine_step(struct engine *e) {
     /* Write the star formation information to the file */
     if (e->policy & engine_policy_star_formation) {
       star_formation_logger_write_to_log_file(
-          e->sfh_logger, e->time, e->cosmology->a, e->cosmology->z, e->sfh,e->step);
+          e->sfh_logger, e->time, e->cosmology->a, e->cosmology->z, e->sfh,e->step,e->totalSFH,e->activeSFH,e->inactiveSFH);
     }
 
     if (!e->restarting)

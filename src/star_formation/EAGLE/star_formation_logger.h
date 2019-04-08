@@ -156,6 +156,28 @@ INLINE static void star_formation_logger_assign(
 }
 
 /**
+ * @brief add the star formation to the parent cell in the #engine
+ *
+ * @param c the cell for which we want to add the star formation
+ * @param sf the combined star formation history of the progeny
+ */
+INLINE static void star_formation_logger_assign2(
+    struct cell *c, const struct star_formation_history *sf) {
+
+  /* Get the star formation history from the cell */
+  struct star_formation_history *sfcell = &c->stars.sfh;
+
+  /* Update the SFH structure */
+  sfcell->new_stellar_mass = sf->new_stellar_mass;
+
+  sfcell->SFR_active = sf->SFR_active;
+
+  sfcell->SFRdt_active = sf->SFR_active;
+
+  sfcell->SFR_inactive = sf->SFR_inactive;
+}
+
+/**
  * @brief Initialize the star formation history structure in the #engine
  *
  * @param The pointer to the star formation history structure
@@ -184,12 +206,12 @@ INLINE static void star_formation_logger_init_engine(
  */
 INLINE static void star_formation_logger_write_to_log_file(
     FILE *fp, const double time, const double a, const double z,
-    const struct star_formation_history sf, const int step) {
+    const struct star_formation_history sf, const int step, const double total_SFH, const double active_SFH, const double inactive_SFH) {
 
   /* Calculate the total SFR */
   const float totalSFR = sf.SFR_active + sf.SFR_inactive;
-  fprintf(fp, "%6d %16e %12.7f %12.7f %14e %14e %14e %14e\n",step, time, a, z,
-          sf.new_stellar_mass, sf.SFR_active, sf.SFRdt_active, totalSFR);
+  fprintf(fp, "%6d %16e %12.7f %12.7f %14e %14e %14e %14e %14e %14e %14e\n",step, time, a, z,
+          sf.new_stellar_mass, sf.SFR_active, sf.SFRdt_active, totalSFR, total_SFH, active_SFH, inactive_SFH);
 }
 
 /**
@@ -276,6 +298,14 @@ INLINE static void star_formation_logger_log_inactive_part(
 
   /* Add the SFR to the logger file */
   sf->SFR_inactive += max(xp->sf_data.SFR, 0.f);
+}
+
+INLINE static void star_formation_logger_clean_split_cell(
+    struct star_formation_history *sf){
+  sf->new_stellar_mass = 0.f;
+  sf->SFR_active = 0.f;
+  sf->SFRdt_active = 0.f;
+  sf->SFR_inactive = 0.f;
 }
 
 #endif /* SWIFT_SCHAYE_STARFORMATION_LOGGER_H */

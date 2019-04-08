@@ -140,26 +140,26 @@ def getsfrsnapwide(numbsnaps):
 if __name__ == "__main__":
     # Read the logger file
     logdata = np.loadtxt("output_SFH_logger.txt")
-    timelog = logdata[:, 0] * 9.778131e2
+    timelog = logdata[:, 1] * 9.778131e2
     # Store plot of the logger SFH
-    plt.plot(timelog, logdata[:, 6] * 1.023009e01)
+    plt.plot(timelog, logdata[:, 7] * 1.023009e01)
     plt.xlabel("Time (Myr)")
     plt.ylabel("SFH [$\\rm M_\odot \\rm yr^{-1}$]")
-    plt.xlim(0, 100)
+    #plt.xlim(0, 100)
     plt.savefig("SFH_logger.png")
     plt.close()
 
     # Calculate the cumulative sum of the elements of active sfh and formed stars
-    CSFH_Mstar = np.cumsum(logdata[:, 3] * 1e10)
-    CSFH_SFRdt = np.cumsum(logdata[:, 5] * 1e10)
+    CSFH_Mstar = np.cumsum(logdata[:, 4] * 1e10)
+    CSFH_SFRdt = np.cumsum(logdata[:, 6] * 1e10)
 
     # plot the CSFH of the logger
     plt.plot(timelog, CSFH_Mstar, label="Stars formed")
     plt.plot(timelog, CSFH_SFRdt, label="Active gas particles")
     plt.xlabel("Time (Myr)")
     plt.ylabel("CSFH [$\\rm M_\odot$]")
-    plt.xlim(0, 100)
-    plt.ylim(0, 1.2e9)
+    #plt.xlim(0, 100)
+    #plt.ylim(0, 1.2e9)
     plt.legend()
     plt.savefig("CSFH_logger.png")
     plt.close()
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     plt.close()
 
     # Make a plot of the SFH from the snaps and from the log file
-    plt.plot(timelog, logdata[:, 6] * 1.023009e01, label="SFH log file")
+    plt.plot(timelog, logdata[:, 7] * 1.023009e01, label="SFH log file")
     plt.plot(
         timesnap[:-1] * 9.778131e2, SFRsnap[:-1] * 1.022690e1, label="SFH gas tracers"
     )

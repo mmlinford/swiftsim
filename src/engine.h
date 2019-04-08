@@ -381,6 +381,11 @@ struct engine {
   /* File pointer to the SFH logger file */
   FILE *sfh_logger;
 
+  /* Total SFH from brute force */
+  double totalSFH;
+  double activeSFH;
+  double inactiveSFH;
+
   /* Properties of the chemistry model */
   const struct chemistry_global_data *chemistry;
 
