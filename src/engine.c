@@ -2412,7 +2412,9 @@ void engine_collect_end_of_step_recurse(struct cell *c,
       s_inhibited += cp->stars.inhibited;
 
       /* Check if the cell is inactive and in that case reorder the SFH */
+      message(" Recurse function " );
       if (!cell_is_starting_hydro(cp,e)){ 
+        message("Done!!" );
         star_formation_logger_log_inactive_cell(&cp->stars.sfh);
       }
 
@@ -2435,39 +2437,39 @@ void engine_collect_end_of_step_recurse(struct cell *c,
         total_SFH += max(0.f,xp->sf_data.SFR);
         
         if (part_is_active(p, e)) {
-          
-          active_SFH += max(0.f,xp->sf_data.SFR);
-        } else {		
-          inactive_SFH += max(0.f,xp->sf_data.SFR);
-        }
-            }	
+            
+            active_SFH += max(0.f,xp->sf_data.SFR);
+          } else {		
+            inactive_SFH += max(0.f,xp->sf_data.SFR);
           }
-        if (cell_is_starting_hydro(cp,e)) message("Cell starting");
-        const double total_logger = cp->stars.sfh.SFR_active + cp->stars.sfh.SFR_inactive;
-        const double active_logger = cp->stars.sfh.SFR_active;
-        const double inactive_logger = cp->stars.sfh.SFR_inactive;
+        }	
+      }
+      //if (cell_is_starting_hydro(cp,e)) message("Cell starting");
+      const double total_logger = cp->stars.sfh.SFR_active + cp->stars.sfh.SFR_inactive;
+      const double active_logger = cp->stars.sfh.SFR_active;
+      const double inactive_logger = cp->stars.sfh.SFR_inactive;
+      message("total %e ",total_logger );
+      double dummy1, dummy2, dummy3;
+      
+      if(compare_values(total_SFH, total_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+        error("Total SF does NOT match logger: %e true: %e", total_logger, total_SFH);
 
-        double dummy1, dummy2, dummy3;
+      int active_wrong = compare_values(active_SFH, active_logger, 0.0001, &dummy1, &dummy2, &dummy3);
+      int inactive_wrong = compare_values(inactive_SFH, inactive_logger, 0.0001, &dummy1, &dummy2, &dummy3);
+
+      if(cell_is_starting_hydro(cp, e))
+      message("is_active=%d", cell_is_starting_hydro(cp, e));
+      
+      if(active_wrong || inactive_wrong) {
+
+        message("cell->depth=%d is_active=%d", cp->depth, cell_is_starting_hydro(cp, e));
         
-        if(compare_values(total_SFH, total_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
-          error("Total SF does NOT match logger: %e true: %e", total_logger, total_SFH);
+        message("Active SF does NOT match logger: %e true: %e", active_logger, active_SFH);
+        message("Inactive SF does NOT match logger: %e true: %e", inactive_logger, inactive_SFH);
 
-        int active_wrong = compare_values(active_SFH, active_logger, 0.0001, &dummy1, &dummy2, &dummy3);
-        int inactive_wrong = compare_values(inactive_SFH, inactive_logger, 0.0001, &dummy1, &dummy2, &dummy3);
+        error("OOOOO");
 
-        //if(cell_is_starting_hydro(c, e))
-        //message("is_active=%d", cell_is_starting_hydro(c, e));
-        
-        if(active_wrong || inactive_wrong) {
-
-          message("cell->depth=%d is_active=%d", cp->depth, cell_is_starting_hydro(cp, e));
-          
-          message("Active SF does NOT match logger: %e true: %e", active_logger, active_SFH);
-          message("Inactive SF does NOT match logger: %e true: %e", inactive_logger, inactive_SFH);
-
-          error("OOOOO");
-
-        }
+      }
 
     // MATTHIEU: END
 
@@ -2609,7 +2611,7 @@ void engine_collect_end_of_step_mapper(void *map_data, int num_elements,
 
   double dummy1, dummy2, dummy3;
   
-  if(compare_values(total_SFH, total_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+  if(compare_values(total_SFH, total_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1 && c->stars.sfh.new_stellar_mass == 0.f)
     error("Total SF does NOT match logger: %e true: %e", total_logger, total_SFH);
 
   int active_wrong = compare_values(active_SFH, active_logger, 0.0001, &dummy1, &dummy2, &dummy3);
