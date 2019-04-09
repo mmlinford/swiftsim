@@ -2414,6 +2414,58 @@ void engine_collect_end_of_step_recurse(struct cell *c,
       /* Add the star formation history in this cell to sfh_updated */
       star_formation_logger_add(cp, &sfh_updated);
 
+      // MATTHIEU: START
+      
+      /* Check active case */
+      double total_SFH = 0.f;
+      double active_SFH = 0.f;
+      double inactive_SFH = 0.f;
+      
+      for (int l = 0; k < cp->hydro.count; l++) {
+        struct xpart *xp = &cp->hydro.xparts[l];
+        struct part *p = &cp->hydro.parts[l];
+        
+        if (!part_is_inhibited(p,e)) {
+        
+        total_SFH += max(0.f,xp->sf_data.SFR);
+        
+        if (part_is_active(p, e)) {
+          
+          active_SFH += max(0.f,xp->sf_data.SFR);
+        } else {		
+          inactive_SFH += max(0.f,xp->sf_data.SFR);
+        }
+            }	
+          }
+        if (cell_is_starting_hydro(cp,e)) message("Cell starting");
+        const double total_logger = cp->stars.sfh.SFR_active + cp->stars.sfh.SFR_inactive;
+        const double active_logger = cp->stars.sfh.SFR_active;
+        const double inactive_logger = cp->stars.sfh.SFR_inactive;
+
+        double dummy1, dummy2, dummy3;
+        
+        if(compare_values(total_SFH, total_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
+          error("Total SF does NOT match logger: %e true: %e", total_logger, total_SFH);
+
+        int active_wrong = compare_values(active_SFH, active_logger, 0.0001, &dummy1, &dummy2, &dummy3);
+        int inactive_wrong = compare_values(inactive_SFH, inactive_logger, 0.0001, &dummy1, &dummy2, &dummy3);
+
+        //if(cell_is_starting_hydro(c, e))
+        //message("is_active=%d", cell_is_starting_hydro(c, e));
+        
+        if(active_wrong || inactive_wrong) {
+
+          message("cell->depth=%d is_active=%d", cp->depth, cell_is_starting_hydro(cp, e));
+          
+          message("Active SF does NOT match logger: %e true: %e", active_logger, active_SFH);
+          message("Inactive SF does NOT match logger: %e true: %e", inactive_logger, inactive_SFH);
+
+          error("OOOOO");
+
+        }
+
+    // MATTHIEU: END
+
       /* Collected, so clear for next time. */
       cp->hydro.updated = 0;
       cp->grav.updated = 0;
@@ -2421,57 +2473,6 @@ void engine_collect_end_of_step_recurse(struct cell *c,
     }
   }
 
-    // MATTHIEU: START
-    
-    /* Check active case */
-    double total_SFH = 0.f;
-    double active_SFH = 0.f;
-    double inactive_SFH = 0.f;
-    
-    for (int k = 0; k < c->hydro.count; k++) {
-      struct xpart *xp = &c->hydro.xparts[k];
-      struct part *p = &c->hydro.parts[k];
-      
-      if (!part_is_inhibited(p,e)) {
-	
-	total_SFH += max(0.f,xp->sf_data.SFR);
-	
-	if (part_is_active(p, e)) {
-	  
-	  active_SFH += max(0.f,xp->sf_data.SFR);
-	} else {		
-	  inactive_SFH += max(0.f,xp->sf_data.SFR);
-	}
-      }	
-    }
-
-  const double total_logger = c->stars.sfh.SFR_active + c->stars.sfh.SFR_inactive;
-  const double active_logger = c->stars.sfh.SFR_active;
-  const double inactive_logger = c->stars.sfh.SFR_inactive;
-
-  double dummy1, dummy2, dummy3;
-  
-  if(compare_values(total_SFH, total_logger, 0.0001, &dummy1, &dummy2, &dummy3) == 1)
-    error("Total SF does NOT match logger: %e true: %e", total_logger, total_SFH);
-
-  int active_wrong = compare_values(active_SFH, active_logger, 0.0001, &dummy1, &dummy2, &dummy3);
-  int inactive_wrong = compare_values(inactive_SFH, inactive_logger, 0.0001, &dummy1, &dummy2, &dummy3);
-
-  //if(cell_is_starting_hydro(c, e))
-  //message("is_active=%d", cell_is_starting_hydro(c, e));
-  
-  if(active_wrong || inactive_wrong) {
-
-    message("cell->depth=%d is_active=%d", c->depth, cell_is_starting_hydro(c, e));
-    
-    message("Active SF does NOT match logger: %e true: %e", active_logger, active_SFH);
-    message("Inactive SF does NOT match logger: %e true: %e", inactive_logger, inactive_SFH);
-
-    error("OOOOO");
-
-  }
-
-  // MATTHIEU: END
 
   
   /* Store the collected values in the cell. */
