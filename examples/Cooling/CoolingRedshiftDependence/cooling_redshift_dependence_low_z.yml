@@ -68,7 +68,6 @@ EAGLEChemistry: 	     # Primordial abundances
   init_abundance_Silicon:    0.
   init_abundance_Iron:       0.
 
-
 # Parameters for the EAGLE cooling
 EAGLECooling:
   dir_name:                ./coolingtables/
