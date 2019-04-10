@@ -292,6 +292,9 @@ struct engine {
   /* File handle for the timesteps information */
   FILE *file_timesteps;
 
+  /* File handle for the SFH logger file */
+  FILE *sfh_logger;
+
   /* The current step number. */
   int step;
 
@@ -382,9 +385,6 @@ struct engine {
 
   /* Properties of the starformation law */
   const struct star_formation *star_formation;
-
-  /* File pointer to the SFH logger file */
-  FILE *sfh_logger;
 
   /* Total SFH from brute force */
   double totalSFH;
